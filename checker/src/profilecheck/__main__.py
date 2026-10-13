@@ -30,7 +30,7 @@ It tries no other ports. Common defaults: {DEFAULT_PORTS}.
 
 
 def check_server(transport: Transport, url: str, lan: list[str]) -> Target:
-    transport.allow(urlsplit(url).hostname or "")
+    transport.allow_url(url)
     found = identify(transport, url)
     target = Target(url, found.kind, found.version)
     results, reachable = network_checks(transport, url, found, lan)

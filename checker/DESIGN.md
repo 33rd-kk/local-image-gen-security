@@ -135,10 +135,19 @@ checker/
   tests/                  pytest against local fake servers (http.server)
 ```
 
-Every outgoing request goes through one function. That function refuses
-any method other than GET, HEAD and OPTIONS, and any host that is neither
-named by the owner nor one of this computer's own addresses. The tests
-assert both.
+Every outgoing request goes through one function. That function refuses:
+
+- any method other than GET, HEAD and OPTIONS;
+- any path other than a fixed list of endpoints known to change nothing,
+  under the path the named URL gives;
+- any query string;
+- any host that is neither named by the owner nor one of this computer's
+  own addresses.
+
+The tests assert all of these. The path list exists because a safe method
+is not enough: ComfyUI-Manager, for one, removes and restores snapshots on
+GET requests. ComfyUI-Manager's `security_level` cannot be read safely, so
+EXT-1 says that the Manager is present, and how reachable the server is.
 
 ### Language (for the record)
 

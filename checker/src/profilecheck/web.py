@@ -9,6 +9,7 @@ from .transport import Transport
 
 FOREIGN_ORIGIN = "http://example.invalid"
 FOREIGN_HOST = "rebind.example.invalid"
+PAGE_TIMEOUT = 20.0
 
 
 def web_checks(transport: Transport, base: str, found: Identified, reachable_from_network: bool) -> list[Result]:
@@ -46,9 +47,12 @@ def web_checks(transport: Transport, base: str, found: Identified, reachable_fro
         results.append(Result("WEB-2", PASS, "Answers differently for a host name it does not know", [f"{FOREIGN_HOST}: {rebound.status}"]))
 
     # WEB-3: headers on its page.
-    page = transport.request("GET", base.rstrip("/") + "/")
-    if page is None or page.status >= 400:
-        results.append(Result("WEB-3", UNKNOWN, "No page to read headers from"))
+    # A development server builds a page on its first request, which can take a while.
+    page = transport.request("GET", base.rstrip("/") + "/", timeout=PAGE_TIMEOUT)
+    if page is None:
+        results.append(Result("WEB-3", UNKNOWN, f"Its page did not answer within {PAGE_TIMEOUT:.0f} s (run the check again)"))
+    elif page.status >= 400:
+        results.append(Result("WEB-3", UNKNOWN, f"No page to read headers from ({page.status})"))
     else:
         missing = []
         csp = (page.header("content-security-policy") or "").lower()

@@ -313,3 +313,44 @@ def test_windows_access_lists(tmp_path: Path) -> None:
     assert result.status == FAIL
     assert result.evidence[0].startswith("latentry.pairing-key: also readable by ")
     assert "Users" in result.evidence[0]
+
+
+# ── Round 4: fixed endpoints, disguised pickles, plain HTTP on the network ──
+
+
+def test_only_the_known_read_only_endpoints_are_asked() -> None:
+    transport = Transport()
+    transport.allow_url("http://127.0.0.1:8188/comfy/")
+    # A GET that acts (ComfyUI-Manager has some) is refused like a POST.
+    for path in ("/snapshot/remove", "/comfy/snapshot/remove", "/comfy/system_stats?x=1", "/system_stats/../snapshot/remove"):
+        with pytest.raises(RefusedRequest):
+            transport.request("GET", "http://127.0.0.1:8188" + path)
+    assert transport.sent == []
+    # Under the named path, and at the root, the known endpoints are asked
+    # (port 9 is closed, so nothing answers, but nothing is refused either).
+    for path in ("/comfy/system_stats", "/system_stats", "/comfy/", "/"):
+        assert transport.request("GET", "http://127.0.0.1:9" + path, timeout=0.5) is None
+    assert len(transport.sent) == 4
+
+
+def test_a_pickle_named_safetensors_fails(tmp_path: Path) -> None:
+    (tmp_path / "zip.safetensors").write_bytes(b"PK\x03\x04" + b"\0" * 60)
+    (tmp_path / "bare.safetensors").write_bytes(b"\x80\x04" + b"\0" * 60)
+    results = model_checks(tmp_path)
+    assert results[0].status == FAIL
+    assert sorted(results[0].evidence) == ["bare.safetensors", "zip.safetensors"]
+
+
+def test_a_real_header_whose_length_starts_like_a_pickle_is_ok(tmp_path: Path) -> None:
+    # A header of 0x0280 bytes: its length starts with 0x80 0x02, as a protocol 2 pickle does.
+    body = json.dumps({"w": {"dtype": "F16", "shape": [1], "data_offsets": [0, 2]}, "__metadata__": {"pad": "x" * 560}}).encode()
+    body = body + b" " * (0x0280 - len(body))
+    (tmp_path / "real.safetensors").write_bytes(struct.pack("<Q", len(body)) + body + b"\0\0")
+    assert [r.status for r in model_checks(tmp_path)] == [PASS]
+
+
+@needs_second_loopback
+def test_plain_http_on_the_network_is_said() -> None:
+    with server("latentry", bind="0.0.0.0", pairing=True, check_host=True) as (url, _):
+        target = cli.check_server(Transport(), url, [OTHER_ADDRESS])
+    assert any("unencrypted" in item for item in by_id(target, "NET-1")[0].evidence)

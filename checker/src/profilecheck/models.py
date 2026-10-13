@@ -20,20 +20,30 @@ MAX_HEADER = 100_000_000
 MAX_LISTED = 20
 
 
-def _header_ok(path: Path) -> bool:
+def _looks_like_pickle(start: bytes) -> bool:
+    """PyTorch's zip format, or a bare pickle (protocol 2 to 5)."""
+    return start.startswith(b"PK\x03\x04") or (len(start) >= 2 and start[0] == 0x80 and 2 <= start[1] <= 5)
+
+
+def _header(path: Path) -> str:
+    """"ok", "broken", or "pickle" for a pickle-format file named .safetensors.
+
+    The header is tried first: a real header's length can begin with the
+    same bytes as a pickle, so the content is sniffed only when it fails.
+    """
     try:
         size = path.stat().st_size
         with path.open("rb") as file:
             raw = file.read(8)
-            if len(raw) != 8:
-                return False
-            (length,) = struct.unpack("<Q", raw)
-            if length > MAX_HEADER or length + 8 > size:
-                return False
-            header = json.loads(file.read(length))
-    except (OSError, ValueError, struct.error):
-        return False
-    return isinstance(header, dict)
+            try:
+                (length,) = struct.unpack("<Q", raw)
+                if length <= MAX_HEADER and length + 8 <= size and isinstance(json.loads(file.read(length)), dict):
+                    return "ok"
+            except (ValueError, struct.error):
+                pass
+    except OSError:
+        return "broken"
+    return "pickle" if _looks_like_pickle(raw) else "broken"
 
 
 def model_checks(folder: Path) -> list[Result]:
@@ -42,6 +52,7 @@ def model_checks(folder: Path) -> list[Result]:
     pickles_alone: list[str] = []
     pickles_beside: list[str] = []
     broken: list[str] = []
+    disguised: list[str] = []
     safetensors = 0
     for root, dirs, files in os.walk(folder, followlinks=False):
         here = Path(root)
@@ -55,12 +66,21 @@ def model_checks(folder: Path) -> list[Result]:
             lower = name.lower()
             if lower.endswith(".safetensors"):
                 safetensors += 1
-                if not _header_ok(path):
+                state = _header(path)
+                if state == "pickle":
+                    disguised.append(relative)
+                elif state == "broken":
                     broken.append(relative)
             elif lower.endswith(PICKLE_SUFFIXES):
                 (pickles_beside if has_safetensors else pickles_alone).append(relative)
 
     results: list[Result] = []
+    if disguised:
+        results.append(
+            Result("MOD-1", FAIL, f"{len(disguised)} file(s) named .safetensors that are really in a pickle format",
+                   _listed(disguised), "A loader that goes by the content, not the name, would run the code inside (T4).",
+                   "Delete them, and get the real .safetensors file from its publisher.")
+        )
     if pickles_alone:
         results.append(
             Result("MOD-1", FAIL, f"{len(pickles_alone)} weight file(s) only in a pickle format, which can run code when loaded",
@@ -71,7 +91,7 @@ def model_checks(folder: Path) -> list[Result]:
             Result("MOD-1", WARN, f"{len(pickles_beside)} pickle-format file(s) next to .safetensors files (most loaders read the .safetensors one)",
                    _listed(pickles_beside), fixes.WHY["MOD-1"], fixes.fix("MOD-1", "models"))
         )
-    if not pickles_alone and not pickles_beside:
+    if not pickles_alone and not pickles_beside and not disguised:
         results.append(Result("MOD-1", PASS, f"No pickle-format weight files ({safetensors} .safetensors files)"))
     if broken:
         results.append(Result("MOD-1", WARN, f"{len(broken)} .safetensors file(s) with a header that does not read", _listed(broken),
