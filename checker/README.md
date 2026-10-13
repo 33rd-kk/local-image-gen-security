@@ -18,12 +18,13 @@ name.
 
 | ID | What |
 |---|---|
-| NET-1 | Whether a server on 127.0.0.1 also answers on this computer's network addresses |
+| NET-1 | Whether a server on 127.0.0.1 also answers on this computer's network addresses (IPv4 and IPv6) |
 | NET-2 | Whether it can be used from the network without a login or pairing |
 | BE-1 | A server on another computer reached over plain HTTP |
 | WEB-1 | Whether other websites may read its answers (CORS) |
 | WEB-2 | Whether it answers for any host name (DNS rebinding) |
 | WEB-3 | Protective headers on its page |
+| EXT-1 | An extension installer on the server (ComfyUI-Manager), and how many node packs or A1111 extensions it runs (counts only, never names) |
 | MOD-1 | Weight files in a pickle format (`.ckpt`, `.pt`, `.pth`, `.bin`, `.pkl`), and safetensors headers that do not read |
 
 Exit code 0 when nothing failed, 1 when something failed, 2 for a usage

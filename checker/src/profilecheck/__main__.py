@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from . import __version__
+from .ext import extension_checks
 from .models import model_checks
 from .net import network_checks, own_lan_addresses
 from .report import Redactor, as_json, as_text, summary
@@ -34,7 +35,10 @@ def check_server(transport: Transport, url: str, lan: list[str]) -> Target:
     results, reachable = network_checks(transport, url, found, lan)
     target.results.extend(results)
     if found.answer is not None:
-        target.results.extend(web_checks(transport, url, found, reachable))
+        web = web_checks(transport, url, found, reachable)
+        target.results.extend(web)
+        any_host = any(r.id == "WEB-2" and r.status in ("warn", "fail") for r in web)
+        target.results.extend(extension_checks(transport, url, found, reachable, any_host))
     return target
 
 

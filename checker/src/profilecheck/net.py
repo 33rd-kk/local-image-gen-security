@@ -26,29 +26,38 @@ def is_loopback(host: str) -> bool:
 
 
 def own_lan_addresses() -> list[str]:
-    """This computer's IPv4 addresses other than loopback and link-local.
+    """This computer's IPv4 and IPv6 addresses other than loopback and link-local.
 
     From the host name's addresses, and from the address a UDP socket would
     send from (connect() on UDP sends no packet).
     """
     found: set[str] = set()
-    try:
-        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
-            found.add(str(info[4][0]))
-    except OSError:
-        pass
-    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        probe.connect(("192.0.2.1", 9))  # TEST-NET-1: never reached, only routed
-        found.add(probe.getsockname()[0])
-    except OSError:
-        pass
-    finally:
-        probe.close()
+    for family in (socket.AF_INET, socket.AF_INET6):
+        try:
+            for info in socket.getaddrinfo(socket.gethostname(), None, family):
+                found.add(str(info[4][0]).split("%")[0])
+        except OSError:
+            pass
+    # Documentation addresses (TEST-NET-1, 2001:db8::): never reached, only routed.
+    for family, target in ((socket.AF_INET, ("192.0.2.1", 9)), (socket.AF_INET6, ("2001:db8::1", 9))):
+        try:
+            probe = socket.socket(family, socket.SOCK_DGRAM)
+        except OSError:
+            continue
+        try:
+            probe.connect(target)
+            found.add(str(probe.getsockname()[0]).split("%")[0])
+        except OSError:
+            pass
+        finally:
+            probe.close()
     lan = []
-    for address in sorted(found):
-        ip = ipaddress.ip_address(address)
-        if not (ip.is_loopback or ip.is_link_local or ip.is_unspecified):
+    for address in sorted(found, key=lambda a: (":" in a, a)):
+        try:
+            ip = ipaddress.ip_address(address)
+        except ValueError:
+            continue
+        if not (ip.is_loopback or ip.is_link_local or ip.is_unspecified or ip.is_multicast):
             lan.append(address)
     return lan
 
@@ -68,6 +77,8 @@ def needs_login(answer: Answer) -> bool:
 
 def with_host(url: str, host: str) -> str:
     parts = urlsplit(url)
+    if ":" in host:
+        host = f"[{host}]"
     netloc = host if parts.port is None else f"{host}:{parts.port}"
     return urlunsplit((parts.scheme, netloc, parts.path, parts.query, ""))
 
@@ -110,6 +121,9 @@ def network_checks(transport: Transport, base: str, found: Identified, lan: list
     else:
         results.append(Result("NET-2", PASS, "Only this computer can reach it, so no login is needed"))
 
-    if not is_loopback(host) and urlsplit(base).scheme == "http":
-        results.append(Result("BE-1", WARN, "Reached over plain HTTP on another computer", [base], fixes.WHY["BE-1"], fixes.fix("BE-1", kind)))
+    if not is_loopback(host):
+        if urlsplit(base).scheme == "http":
+            results.append(Result("BE-1", WARN, "Reached over plain HTTP on another computer", [base], fixes.WHY["BE-1"], fixes.fix("BE-1", kind)))
+        else:
+            results.append(Result("BE-1", PASS, "Reached over HTTPS, with its certificate checked"))
     return results, bool(from_network)

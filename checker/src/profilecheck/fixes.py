@@ -9,6 +9,7 @@ WHY = {
     "WEB-1": "Any website you visit could read its answers and drive it from your browser (T1).",
     "WEB-2": "A web page you visit can re-point its own host name at this computer (DNS rebinding) and then use the server (T1).",
     "WEB-3": "Without these headers, other sites can frame its page, and browsers may guess file types (T1).",
+    "EXT-1": "Extensions run with the server's rights, and an installer lets whoever can use the server add new code to this computer (T4, and T1-T3 when others can reach it).",
     "MOD-1": "Loading a pickle-format file runs whatever code is inside it (T4).",
 }
 
@@ -29,7 +30,9 @@ FIXES: dict[tuple[str, str], str] = {
     ("WEB-2", "http"): "Check the Host header against the names it is meant to serve, and refuse others.",
     ("WEB-3", "comfyui"): "ComfyUI has no setting for these. Matters little while it stays on 127.0.0.1; a hub or reverse proxy in front of it can add them.",
     ("WEB-3", "a1111"): "The web UI has no setting for these. Matters little while it stays on 127.0.0.1; a reverse proxy in front of it can add them.",
-    ("WEB-3", "http"):"Send X-Frame-Options: DENY (or CSP frame-ancestors 'none'), X-Content-Type-Options: nosniff and a Referrer-Policy.",
+    ("WEB-3", "http"): "Send X-Frame-Options: DENY (or CSP frame-ancestors 'none'), X-Content-Type-Options: nosniff and a Referrer-Policy.",
+    ("EXT-1", "comfyui"): "Keep ComfyUI on 127.0.0.1 with nothing else able to reach it, and in ComfyUI-Manager's config.ini set security_level = strong so it cannot install from the browser. Remove node packs you do not use.",
+    ("EXT-1", "a1111"): "Remove extensions you do not use. Never start it with --enable-insecure-extension-access on the network.",
     ("MOD-1", "models"): "Replace each file with its .safetensors version from the same publisher, and delete the old one. If none exists, load it only if you trust where it came from.",
 }
 

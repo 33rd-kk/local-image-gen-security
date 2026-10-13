@@ -25,7 +25,7 @@ OTHER_ADDRESS = "127.0.0.2"
 needs_second_loopback = pytest.mark.skipif(sys.platform == "darwin", reason="macOS has no 127.0.0.2")
 
 
-def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pairing: bool = False):
+def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pairing: bool = False, manager: bool = False):
     class Handler(BaseHTTPRequestHandler):
         seen: ClassVar[list[tuple[str, str, str]]] = []
 
@@ -51,6 +51,10 @@ def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pai
                 return self._send(403, {"error": "Forbidden host"})
             if kind == "comfyui" and self.path == "/system_stats":
                 return self._send(200, {"system": {"comfyui_version": "0.39.2", "argv": ["main.py", "--secret-flag"]}, "devices": []})
+            if kind == "comfyui" and self.path == "/extensions":
+                return self._send(200, ["/extensions/core/a.js", "/extensions/core/b.js", "/extensions/private-pack/x.js", "/extensions/other-pack/y.js"])
+            if kind == "comfyui" and manager and self.path == "/v2/manager/version":
+                return self._send(200, "V4.2.2")
             if kind == "latentry" and self.path == "/api/pair":
                 local = self.client_address[0] == "127.0.0.1" and host == "127.0.0.1"
                 return self._send(200, {"local": True} if local or not pairing else {"paired": False})
@@ -221,3 +225,43 @@ def test_exit_code_and_redacted_json(tmp_path: Path, capsys) -> None:
     assert data["summary"]["fail"] >= 1
     assert str(tmp_path) not in out and str(tmp_path).replace("\\", "\\\\") not in out
     assert f":{port}" not in out
+
+
+# ── Extensions and addresses ─────────────────────────────────────────────
+
+
+def test_comfyui_manager_warns_and_names_of_node_packs_are_not_kept() -> None:
+    with server("comfyui", manager=True) as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    ext = by_id(target, "EXT-1")[0]
+    assert ext.status == WARN
+    assert "at least 2 custom node pack(s) with a web part" in ext.evidence
+    assert any("4.2.2" in item for item in ext.evidence)
+    assert "private-pack" not in json.dumps(target.to_json())
+    with server("comfyui") as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    assert by_id(target, "EXT-1")[0].status == PASS
+
+
+@needs_second_loopback
+def test_comfyui_manager_reachable_from_the_network_fails() -> None:
+    with server("comfyui", bind="0.0.0.0", manager=True) as (url, _):
+        target = cli.check_server(Transport(), url, [OTHER_ADDRESS])
+    assert by_id(target, "EXT-1")[0].status == FAIL
+
+
+def test_ipv6_addresses_are_put_in_brackets() -> None:
+    from profilecheck.net import with_host
+
+    assert with_host("http://127.0.0.1:8188/system_stats", "fd00::5") == "http://[fd00::5]:8188/system_stats"
+    assert with_host("http://127.0.0.1:8188/x", "192.168.1.5") == "http://192.168.1.5:8188/x"
+
+
+def test_own_addresses_are_never_loopback_or_link_local() -> None:
+    import ipaddress
+
+    from profilecheck.net import own_lan_addresses
+
+    for address in own_lan_addresses():
+        ip = ipaddress.ip_address(address)
+        assert not (ip.is_loopback or ip.is_link_local or ip.is_unspecified)
