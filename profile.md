@@ -151,10 +151,15 @@ limited per peer, and expensive work (GPU jobs) per peer and in total.
 *Check:* send an oversized body, then a burst of requests.
 
 **WEB-5 (L2, SHOULD)** Controlling a running job (stopping it, reading its
-result) needs an identifier that cannot be guessed. Only the client that
-started the job holds it.
-*Why:* T2. One device must not stop or read another's job.
-*Check:* job identifiers have at least 122 bits of randomness.
+result) needs an identifier that cannot be guessed. Clients that are not
+enrolled never get it. The component MAY share an ordinary job's identifier
+among the host and the enrolled devices, since they all belong to one owner
+(so that a reload on another device can pick the job up again). A job run
+in the private mode (DATA-3) is known only to the client that started it.
+*Why:* T2. A device that has not been enrolled must not stop or read
+anything, and a private run must not show up on the owner's other devices.
+*Check:* job identifiers have at least 122 bits of randomness. A private
+job's identifier is never sent to another client.
 
 ### 6.3 Devices (AUTH)
 
