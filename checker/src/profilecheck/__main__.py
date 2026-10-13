@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 
 from . import __version__
 from .ext import extension_checks
+from .files import file_checks
 from .models import model_checks
 from .net import network_checks, own_lan_addresses
 from .report import Redactor, as_json, as_text, summary
@@ -49,6 +50,8 @@ def main(argv: list[str] | None = None) -> int:
     check = sub.add_parser("check", help="check servers and model folders", description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
     check.add_argument("urls", nargs="*", metavar="URL", help="a server to check, e.g. http://127.0.0.1:8188")
     check.add_argument("--models", action="append", default=[], metavar="DIR", help="a model folder to check (may be repeated)")
+    check.add_argument("--private", action="append", default=[], metavar="PATH",
+                       help="a private file, or a folder with a hub's private files (Latentry's settings and keys), whose permissions to check")
     check.add_argument("--json", metavar="FILE", help="also write the report as JSON to FILE ('-' for standard output only)")
     check.add_argument("--redact", action="store_true", help="hide paths, host names, addresses and ports, to share the report")
     args = parser.parse_args(argv)
@@ -56,8 +59,8 @@ def main(argv: list[str] | None = None) -> int:
     for url in args.urls:
         if urlsplit(url).scheme not in ("http", "https") or not urlsplit(url).hostname:
             parser.error(f"not an http(s) URL: {url}")
-    if not args.urls and not args.models:
-        parser.error(f"name at least one server URL or --models folder (common ports: {DEFAULT_PORTS})")
+    if not args.urls and not args.models and not args.private:
+        parser.error(f"name at least one server URL, --models folder or --private path (common ports: {DEFAULT_PORTS})")
 
     redact = Redactor(args.redact)
     transport = Transport()
@@ -78,6 +81,13 @@ def main(argv: list[str] | None = None) -> int:
         redact.add(folder, f"<models{index}>")
         target = Target(folder, "models")
         target.results.extend(model_checks(path))
+        targets.append(target)
+    for index, place in enumerate(args.private, 1):
+        path = Path(place)
+        redact.add(str(path.resolve()), f"<private{index}>")
+        redact.add(place, f"<private{index}>")
+        target = Target(place, "files")
+        target.results.extend(file_checks(path))
         targets.append(target)
     redact.add(str(Path.home()), "<home>")
 

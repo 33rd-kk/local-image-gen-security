@@ -265,3 +265,51 @@ def test_own_addresses_are_never_loopback_or_link_local() -> None:
     for address in own_lan_addresses():
         ip = ipaddress.ip_address(address)
         assert not (ip.is_loopback or ip.is_link_local or ip.is_unspecified)
+
+
+# ── Private files ────────────────────────────────────────────────────────
+
+windows_only = pytest.mark.skipif(sys.platform != "win32", reason="Windows access lists")
+posix_only = pytest.mark.skipif(sys.platform == "win32", reason="POSIX modes")
+
+
+def test_a_folder_is_searched_for_known_private_files(tmp_path: Path) -> None:
+    from profilecheck.files import file_checks, private_files
+
+    (tmp_path / "latentry.settings.json").write_text("{}")
+    (tmp_path / "notes.txt").write_text("not private")
+    assert [p.name for p in private_files(tmp_path)] == ["latentry.settings.json"]
+    assert [r.status for r in file_checks(tmp_path / "empty-folder-that-is-not-there")] == ["unknown"]
+
+
+@posix_only
+def test_posix_modes(tmp_path: Path) -> None:
+    from profilecheck.files import file_checks
+
+    secret = tmp_path / "latentry.pairing-key"
+    secret.write_text("k")
+    secret.chmod(0o600)
+    assert [r.status for r in file_checks(secret)] == [PASS]
+    secret.chmod(0o644)
+    result = file_checks(secret)[0]
+    assert result.status == FAIL and "every user" in result.evidence[0]
+
+
+@windows_only
+def test_windows_access_lists(tmp_path: Path) -> None:
+    import os
+    import subprocess
+
+    from profilecheck.files import file_checks
+
+    icacls = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "icacls.exe")
+    secret = tmp_path / "latentry.pairing-key"
+    secret.write_text("k")
+    user = os.environ["USERNAME"]
+    subprocess.run([icacls, str(secret), "/inheritance:r", "/grant:r", f"{user}:F", "*S-1-5-18:F"], check=True, capture_output=True)
+    assert [r.status for r in file_checks(secret)] == [PASS]
+    subprocess.run([icacls, str(secret), "/grant", "*S-1-5-32-545:R"], check=True, capture_output=True)  # BUILTIN\Users
+    result = file_checks(secret)[0]
+    assert result.status == FAIL
+    assert result.evidence[0].startswith("latentry.pairing-key: also readable by ")
+    assert "Users" in result.evidence[0]

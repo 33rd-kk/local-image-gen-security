@@ -11,6 +11,7 @@ WHY = {
     "WEB-3": "Without these headers, other sites can frame its page, and browsers may guess file types (T1).",
     "EXT-1": "Extensions run with the server's rights, and an installer lets whoever can use the server add new code to this computer (T4, and T1-T3 when others can reach it).",
     "MOD-1": "Loading a pickle-format file runs whatever code is inside it (T4).",
+    "DATA-4": "Other people who use this computer, or software running as them, can read settings, keys and tokens in these files (T6).",
 }
 
 FIXES: dict[tuple[str, str], str] = {
@@ -27,13 +28,15 @@ FIXES: dict[tuple[str, str], str] = {
     ("WEB-1", "a1111"): "Start the web UI without --cors-allow-origins (or with your own origin only).",
     ("WEB-1", "http"): "Do not send Access-Control-Allow-Origin: * (or the requesting origin) on its API.",
     ("WEB-2", "comfyui"): "Keep it on 127.0.0.1 and put a hub in front that checks host names, or an authenticating reverse proxy that does.",
-    ("WEB-2", "http"): "Check the Host header against the names it is meant to serve, and refuse others.",
+    ("WEB-2", "a1111"): "The web UI cannot check host names. Keep it on 127.0.0.1 and use it through a hub that does, or an authenticating reverse proxy that does.",
+    ("WEB-2", "http"):"Check the Host header against the names it is meant to serve, and refuse others.",
     ("WEB-3", "comfyui"): "ComfyUI has no setting for these. Matters little while it stays on 127.0.0.1; a hub or reverse proxy in front of it can add them.",
     ("WEB-3", "a1111"): "The web UI has no setting for these. Matters little while it stays on 127.0.0.1; a reverse proxy in front of it can add them.",
     ("WEB-3", "http"): "Send X-Frame-Options: DENY (or CSP frame-ancestors 'none'), X-Content-Type-Options: nosniff and a Referrer-Policy.",
     ("EXT-1", "comfyui"): "Keep ComfyUI on 127.0.0.1 with nothing else able to reach it, and in ComfyUI-Manager's config.ini set security_level = strong so it cannot install from the browser. Remove node packs you do not use.",
     ("EXT-1", "a1111"): "Remove extensions you do not use. Never start it with --enable-insecure-extension-access on the network.",
-    ("MOD-1", "models"): "Replace each file with its .safetensors version from the same publisher, and delete the old one. If none exists, load it only if you trust where it came from.",
+    ("DATA-4", "files"): "On Linux and macOS: chmod 600 on each file. On Windows: icacls <file> /inheritance:r /grant:r \"%USERNAME%:F\" \"*S-1-5-18:F\", or move the folder under your own profile. Latentry 0.8.1 and later does this itself the next time it starts.",
+    ("MOD-1", "models"):"Replace each file with its .safetensors version from the same publisher, and delete the old one. If none exists, load it only if you trust where it came from.",
 }
 
 

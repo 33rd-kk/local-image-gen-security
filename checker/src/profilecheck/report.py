@@ -48,9 +48,9 @@ def summary(targets: list[Target]) -> dict[str, int]:
 def as_text(targets: list[Target], redact: Redactor) -> str:
     lines: list[str] = []
     for target in targets:
-        name = "Models in" if target.kind == "models" else KIND_NAMES.get(target.kind, target.kind)
+        name = {"models": "Models in", "files": "Private files in"}.get(target.kind) or KIND_NAMES.get(target.kind, target.kind)
         version = f" {target.version}" if target.version else ""
-        lines.append(redact(f"{name}{version} {'' if target.kind == 'models' else 'at '}{target.label}".replace("  ", " ")))
+        lines.append(redact(f"{name}{version} {'' if target.kind in ('models', 'files') else 'at '}{target.label}".replace("  ", " ")))
         for result in sorted(target.results, key=lambda r: [FAIL, WARN, UNKNOWN, PASS].index(r.status)):
             lines.append(redact(f"  {MARK[result.status]}  {result.id:<6} {result.title}"))
             for item in result.evidence:
