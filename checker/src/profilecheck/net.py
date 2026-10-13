@@ -98,7 +98,7 @@ def network_checks(transport: Transport, base: str, found: Identified, lan: list
 
     if from_network:
         open_ones = [(a, r) for a, r in from_network if not needs_login(r)]
-        evidence = [f"{a} answered {r.status}" for a, r in from_network]
+        evidence = [f"{a} answered {r.status}" + (" and asked for a login or pairing" if needs_login(r) else ", usable as is") for a, r in from_network]
         if is_loopback(host):
             status = FAIL if open_ones else WARN
             title = "Reachable from your network" + ("" if open_ones else ", but it asks for a login or pairing")
