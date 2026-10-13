@@ -49,11 +49,11 @@ Since it is a security tool, it follows the profile itself:
   <name> check http://127.0.0.1:3000                  # Latentry or another hub
 ```
 
-With no URL, it checks the default addresses of the known tools, but only
-on 127.0.0.1: ComfyUI on 8188 (and the Desktop app's 8000), A1111 and Forge
-on 7860, Latentry on 3000, InvokeAI on 9090, SwarmUI on 7801. These are
-single connection attempts to well-known defaults on this computer, not a
-scan; `--no-defaults` turns them off.
+At least one URL or `--models` folder is required. It never tries ports
+the owner did not name, not even the well-known defaults; the help text and
+the report list the defaults of the known tools (ComfyUI 8188, Comfy
+Desktop 8000, A1111 / Forge 7860, Latentry 3000, InvokeAI 9090, SwarmUI
+7801) so the owner can name theirs.
 
 Exit code: 0 when nothing failed, 1 when a MUST failed, and 2 for a usage
 error.
@@ -109,16 +109,38 @@ The JSON form uses the same structure: `{ "profile": "0.1", "checker": "x.y.z",
 "targets": [{ "url", "kind", "version", "results": [{ "id", "status",
 "evidence", "fix" }] }] }`.
 
-## Open decisions
+## Decisions (2026-10-13)
 
-1. Language and how people get it (see below).
-2. Where it lives: in the profile's repository (one place to adopt), or in
-   its own repository (its own releases and issues).
-3. Name: tied to the profile's name, which is not chosen yet.
-4. Whether the no-URL default (known ports on 127.0.0.1) is wanted, or
-   only explicit URLs.
+1. **Python, standard library only**, run with `uvx` or `pipx run`, and
+   published to PyPI with Trusted Publishing (poseorbit's recipe).
+2. **In the profile's repository**, as `checker/`, so that a change to a
+   requirement and to its check land together.
+3. **Working name for now.** The profile and the checker get their names
+   just before publishing; npm, PyPI and GitHub are checked then.
+4. **Explicit URLs only.** No default ports are tried (see Usage).
 
-### Language
+## Layout
+
+```
+checker/
+  pyproject.toml          no dependencies; requires-python >= 3.10
+  src/<name>/
+    __main__.py           argument parsing, exit codes
+    targets.py            identifying a server (read-only requests)
+    net.py                this computer's LAN addresses, the NET checks
+    web.py                the WEB checks
+    models.py             the MOD checks (safetensors headers only)
+    report.py             text and JSON, --redact
+    fixes.py              fix text per requirement and tool
+  tests/                  pytest against local fake servers (http.server)
+```
+
+Every outgoing request goes through one function. That function refuses
+any method other than GET, HEAD and OPTIONS, and any host that is neither
+named by the owner nor one of this computer's own addresses. The tests
+assert both.
+
+### Language (for the record)
 
 | | Python, standard library only | Node, no dependencies | Go, one binary |
 |---|---|---|---|
