@@ -42,7 +42,7 @@ Since it is a security tool, it follows the profile itself:
 ## Usage
 
 ```
-<name> check [URL ...] [--models DIR ...] [--json FILE] [--redact] [--level 1|2]
+<name> check [URL ...] [--models DIR ...] [--json FILE|-] [--redact]
 
   <name> check http://127.0.0.1:8188                  # a ComfyUI
   <name> check http://127.0.0.1:7860 --models D:\models
