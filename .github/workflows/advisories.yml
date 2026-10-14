@@ -1,0 +1,57 @@
+# Whether the checker's advisory table (checker/src/ligsp/advisory_data.py)
+# still matches what ComfyUI and ComfyUI-Manager publish. Weekly; when it is
+# out of date, it opens (or comments on) an issue, and a maintainer runs
+# tools/update_advisories.py and releases. The checker itself never fetches.
+name: Advisory table
+
+on:
+  schedule:
+    - cron: "37 6 * * 2" # Tuesdays 06:37 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write # to say the table is out of date
+    defaults:
+      run:
+        working-directory: checker
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+      - name: Rebuild the table
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/update_advisories.py
+      # Only the advisories count; the date line changes every run.
+      - name: Compare
+        id: compare
+        run: |
+          if git diff --quiet -I '^DATA_AS_OF = ' -- src/ligsp/advisory_data.py; then
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+          else
+            git diff -I '^DATA_AS_OF = ' --stat -- src/ligsp/advisory_data.py
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Open or update the issue
+        if: steps.compare.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="The advisory table is out of date"
+          body="ComfyUI or ComfyUI-Manager published or changed an advisory. Run \`python tools/update_advisories.py\` in \`checker/\`, check the diff, and release. (Run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+          number=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          fi

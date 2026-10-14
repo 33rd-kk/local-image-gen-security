@@ -29,17 +29,19 @@ def _json(answer) -> object:
         return None
 
 
-def extension_checks(transport: Transport, base: str, found: Identified, reachable_from_network: bool, any_host: bool) -> list[Result]:
-    """`any_host`: it answers for any host name (WEB-2), so a web page could reach it too."""
+def extension_checks(transport: Transport, base: str, found: Identified, reachable_from_network: bool, any_host: bool,
+                     versions: dict[str, str | None] | None = None) -> list[Result]:
+    """`any_host`: it answers for any host name (WEB-2), so a web page could reach it too.
+    `versions` gets the version of each extension installer found (for OPS-3)."""
     base = base.rstrip("/")
     if found.kind == "comfyui":
-        return _comfyui(transport, base, reachable_from_network, any_host)
+        return _comfyui(transport, base, reachable_from_network, any_host, versions if versions is not None else {})
     if found.kind == "a1111":
         return _a1111(transport, base)
     return []
 
 
-def _comfyui(transport: Transport, base: str, reachable_from_network: bool, any_host: bool) -> list[Result]:
+def _comfyui(transport: Transport, base: str, reachable_from_network: bool, any_host: bool, versions: dict[str, str | None]) -> list[Result]:
     results: list[Result] = []
     listed = _json(transport.request("GET", base + "/extensions"))
     packs = None
@@ -57,6 +59,7 @@ def _comfyui(transport: Transport, base: str, reachable_from_network: bool, any_
     if packs is not None:
         evidence.append(f"at least {packs} custom node pack(s) with a web part")
     if manager:
+        versions["comfyui-manager"] = manager
         evidence.append(f"ComfyUI-Manager {manager}")
         if reachable_from_network:
             status, title = FAIL, "An extension installer (ComfyUI-Manager) can be used from the network"

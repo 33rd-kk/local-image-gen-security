@@ -1,0 +1,58 @@
+"""Published security advisories for the tools the checker recognises.
+
+Written by tools/update_advisories.py from GitHub's advisory API; do not edit
+by hand. The checker reads this table and fetches nothing.
+"""
+
+DATA_AS_OF = "2026-10-14"
+
+ADVISORIES = [{'id': 'GHSA-53g8-45wq-pcv8',
+  'tool': 'comfyui',
+  'affected': '< 0.28.0',
+  'fixed': '0.28.0',
+  'severity': 'high',
+  'summary': 'Stored XSS via /userdata/{file} due to missing Content-Type sanitization',
+  'url': 'https://github.com/Comfy-Org/ComfyUI/security/advisories/GHSA-53g8-45wq-pcv8'},
+ {'id': 'GHSA-95pq-hr8p-f5g7',
+  'tool': 'comfyui',
+  'affected': '< 0.3.76',
+  'fixed': '0.3.76',
+  'severity': 'high',
+  'summary': 'Unprotected Alternate Channel in ComfyUI-Manager (CWE-420)',
+  'url': 'https://github.com/Comfy-Org/ComfyUI-Manager/security/advisories/GHSA-95pq-hr8p-f5g7'},
+ {'id': 'GHSA-pj59-g5vv-74q4',
+  'tool': 'comfyui',
+  'affected': '< 0.28.0',
+  'fixed': '0.28.0',
+  'severity': 'high',
+  'summary': 'Path traversal in /experiment/models/preview allows arbitrary image file read',
+  'url': 'https://github.com/Comfy-Org/ComfyUI/security/advisories/GHSA-pj59-g5vv-74q4'},
+ {'id': 'GHSA-rj8c-c4p8-3c5h',
+  'tool': 'comfyui',
+  'affected': '< 0.28.0',
+  'fixed': '0.28.0',
+  'severity': 'high',
+  'summary': 'Stored XSS via SVG file upload on the /view endpoint',
+  'url': 'https://github.com/Comfy-Org/ComfyUI/security/advisories/GHSA-rj8c-c4p8-3c5h'},
+ {'id': 'GHSA-rvxv-29p8-pxgq',
+  'tool': 'comfyui',
+  'affected': '< 0.28.0',
+  'fixed': '0.28.0',
+  'severity': 'high',
+  'summary': 'Path traversal in LoadImage via the /prompt API allows arbitrary file existence probing and image '
+             'exfiltration',
+  'url': 'https://github.com/Comfy-Org/ComfyUI/security/advisories/GHSA-rvxv-29p8-pxgq'},
+ {'id': 'GHSA-562r-8445-54r2',
+  'tool': 'comfyui-manager',
+  'affected': '< 3.39.2, 4.0.0 - 4.0.4',
+  'fixed': '4.0.5, 3.39.2',
+  'severity': 'high',
+  'summary': 'CRLF Injection in Configuration Handler (CWE-93)',
+  'url': 'https://github.com/Comfy-Org/ComfyUI-Manager/security/advisories/GHSA-562r-8445-54r2'},
+ {'id': 'GHSA-95pq-hr8p-f5g7',
+  'tool': 'comfyui-manager',
+  'affected': '< 3.38',
+  'fixed': '3.38',
+  'severity': 'high',
+  'summary': 'Unprotected Alternate Channel in ComfyUI-Manager (CWE-420)',
+  'url': 'https://github.com/Comfy-Org/ComfyUI-Manager/security/advisories/GHSA-95pq-hr8p-f5g7'}]

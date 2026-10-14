@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **OPS-3, published advisories** (profile, SHOULD): the owner can find out
+  whether the version they run has published security advisories, and
+  which version fixes them.
+- **The checker matches versions against advisories**: the ComfyUI and
+  ComfyUI-Manager versions it finds are matched against the advisories
+  those projects publish on GitHub, from a table that ships with the
+  checker (it fetches nothing). A high or critical advisory fails, and the
+  report names each advisory, the fixed version and how old the table is.
+  `tools/update_advisories.py` rebuilds the table, and a weekly workflow
+  opens an issue when it is out of date.
 - A contributing guide, issue forms (a checker problem, a profile change)
   and a pull request template. The README lists the tools that claim
   conformance, starting with Latentry.

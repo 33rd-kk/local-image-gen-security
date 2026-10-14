@@ -330,6 +330,15 @@ against and what it does not, in terms of the threats in section 4.
 so where the setting is made. Examples: listening beyond loopback, turning
 enrolment off, a server reachable without credentials.
 
+**OPS-3 (L1, SHOULD)** The owner can find out whether the version they run
+has published security advisories, and which version fixes them: the
+component shows its version, publishes advisories for its own flaws, and
+names the fixed version in each.
+*Why:* a published advisory tells attackers what to try first. An owner
+who cannot match their version against it stays exposed after a fix ships.
+*Check:* read the version the component reports and match it against its
+published advisories.
+
 ## 7. Claiming conformance
 
 A component that claims this profile publishes a conformance table. For each

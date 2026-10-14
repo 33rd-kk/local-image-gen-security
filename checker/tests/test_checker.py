@@ -25,7 +25,8 @@ OTHER_ADDRESS = "127.0.0.2"
 needs_second_loopback = pytest.mark.skipif(sys.platform == "darwin", reason="macOS has no 127.0.0.2")
 
 
-def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pairing: bool = False, manager: bool = False):
+def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pairing: bool = False, manager: bool = False,
+                 version: str = "0.39.2", manager_version: str = "V4.2.2"):
     class Handler(BaseHTTPRequestHandler):
         seen: ClassVar[list[tuple[str, str, str]]] = []
 
@@ -50,11 +51,11 @@ def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pai
             if check_host and host not in ("127.0.0.1", "localhost", OTHER_ADDRESS):
                 return self._send(403, {"error": "Forbidden host"})
             if kind == "comfyui" and self.path == "/system_stats":
-                return self._send(200, {"system": {"comfyui_version": "0.39.2", "argv": ["main.py", "--secret-flag"]}, "devices": []})
+                return self._send(200, {"system": {"comfyui_version": version, "argv": ["main.py", "--secret-flag"]}, "devices": []})
             if kind == "comfyui" and self.path == "/extensions":
                 return self._send(200, ["/extensions/core/a.js", "/extensions/core/b.js", "/extensions/private-pack/x.js", "/extensions/other-pack/y.js"])
             if kind == "comfyui" and manager and self.path == "/v2/manager/version":
-                return self._send(200, "V4.2.2")
+                return self._send(200, manager_version)
             if kind == "latentry" and self.path == "/api/pair":
                 local = self.client_address[0] == "127.0.0.1" and host == "127.0.0.1"
                 return self._send(200, {"local": True} if local or not pairing else {"paired": False})
@@ -381,3 +382,44 @@ def test_no_control_characters_in_the_repository() -> None:
         if any(b < 32 and b not in (9, 10, 13) for b in data):
             bad.append(path.relative_to(root).as_posix())
     assert bad == []
+
+
+# ── OPS-3: published advisories ─────────────────────────────────────────
+
+
+def test_version_ranges_in_both_comma_styles() -> None:
+    from ligsp.advisories import affects, parse_version
+
+    assert parse_version("V4.2.2") == (4, 2, 2) and parse_version("0.39.2") == (0, 39, 2) and parse_version("found") is None
+    assert affects("< 0.28.0", (0, 27, 9)) and not affects("< 0.28.0", (0, 28)) and not affects("< 0.28.0", (0, 39, 2))
+    assert affects(">= 1.0, < 2.0", (1, 5)) and not affects(">= 1.0, < 2.0", (2, 0))  # comma: both
+    either = "< 3.39.2, 4.0.0 - 4.0.4"  # comma: one or the other
+    assert affects(either, (3, 39, 1)) and affects(either, (4, 0, 3))
+    assert not affects(either, (3, 39, 2)) and not affects(either, (4, 0, 5)) and not affects(either, (4, 2, 2))
+    assert affects("not a range", (1,)) is None
+
+
+def test_an_old_comfyui_and_manager_fail_ops_3_with_their_advisories() -> None:
+    with server("comfyui", manager=True, version="0.27.0", manager_version="V4.0.3") as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    ops = by_id(target, "OPS-3")
+    comfy = next(r for r in ops if r.title.startswith("ComfyUI 0.27.0"))
+    manager = next(r for r in ops if r.title.startswith("ComfyUI-Manager 4.0.3"))
+    assert comfy.status == FAIL and sum("GHSA-" in item for item in comfy.evidence) == 4
+    assert manager.status == FAIL and any("GHSA-562r-8445-54r2" in item for item in manager.evidence)
+    assert any(item.startswith("advisories as of ") for item in comfy.evidence)
+
+
+def test_current_versions_pass_ops_3_and_say_how_old_the_table_is() -> None:
+    from ligsp.advisory_data import DATA_AS_OF
+
+    with server("comfyui", manager=True) as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    ops = by_id(target, "OPS-3")
+    assert [r.status for r in ops] == [PASS, PASS]
+    assert all(DATA_AS_OF in r.title for r in ops)
+
+
+def test_the_checker_fetches_no_advisories() -> None:
+    source = (Path(__file__).resolve().parents[1] / "src" / "ligsp" / "advisories.py").read_text(encoding="utf-8")
+    assert "urllib" not in source and "http" not in source.replace("https://", "")

@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from . import __version__
+from .advisories import advisory_checks
 from .ext import extension_checks
 from .files import file_checks
 from .models import model_checks
@@ -39,7 +40,9 @@ def check_server(transport: Transport, url: str, lan: list[str]) -> Target:
         web = web_checks(transport, url, found, reachable)
         target.results.extend(web)
         any_host = any(r.id == "WEB-2" and r.status in ("warn", "fail") for r in web)
-        target.results.extend(extension_checks(transport, url, found, reachable, any_host))
+        versions: dict[str, str | None] = {found.kind: found.version} if found.kind == "comfyui" else {}
+        target.results.extend(extension_checks(transport, url, found, reachable, any_host, versions))
+        target.results.extend(advisory_checks(versions))
     return target
 
 
