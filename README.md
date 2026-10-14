@@ -18,7 +18,7 @@ from your phone. It has three parts:
   name against the profile. It only reads, and only where you point it.
 - **Conformance tables**: how a tool meets each requirement.
   [Latentry](https://github.com/33rd-kk/latentry) is the reference
-  implementation.
+  implementation (see below).
 
 Status: **0.1 draft**. Requirements may still change, and feedback is
 welcome (see Contributing).
@@ -42,6 +42,14 @@ A tool may say it conforms to "LIGSP 0.1, level 1 (or 2)" when, in its
 publishes a conformance table: for each requirement, its state (met, partly
 met, not met) and where it is done, or why it is not.
 
+## Tools that claim conformance
+
+| Tool | Claim | Table |
+|---|---|---|
+| [Latentry](https://github.com/33rd-kk/latentry) (a hub over ComfyUI, A1111 / Forge and its own engine) | LIGSP 0.1, level 2 | [conformance table](https://33rd-kk.github.io/latentry/reference/ligsp/) |
+
+To add a tool, open a pull request with a link to its published table.
+
 ## The name
 
 "Local Image Generation Security Profile" and "LIGSP" name this profile
@@ -64,7 +72,8 @@ The checker is under the [Apache License 2.0](checker/LICENSE). See
 
 ## Contributing and security
 
-Issues and pull requests are welcome. Please do not post your own
-addresses, ports, folder names or pictures; `ligsp check --redact` makes a
-report you can paste. Report a security problem in the checker privately,
+Issues and pull requests are welcome; [CONTRIBUTING.md](CONTRIBUTING.md)
+says how changes to the profile and the checker work. Please do not post
+your own addresses, ports, folder names or pictures; `ligsp check --redact`
+makes a report you can paste. Report a security problem in the checker privately,
 through GitHub's "Report a vulnerability" (see [SECURITY.md](SECURITY.md)).

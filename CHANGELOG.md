@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- A contributing guide, issue forms (a checker problem, a profile change)
+  and a pull request template. The README lists the tools that claim
+  conformance, starting with Latentry.
+
 ## 0.1.0 (2026-10-14)
 
 The first public draft.

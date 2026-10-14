@@ -1,0 +1,51 @@
+name: Profile change
+description: Propose a new requirement, or a change to one, in the profile
+labels: [profile]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Link public sources only (advisories, documentation, articles), never your own setup.
+        See CONTRIBUTING.md for what makes a requirement fit the profile.
+  - type: input
+    id: requirement
+    attributes:
+      label: Requirement
+      description: An existing ID such as NET-2, or "new"
+    validations:
+      required: true
+  - type: dropdown
+    id: threat
+    attributes:
+      label: Threat
+      description: Section 4 of the profile
+      options:
+        - T1 A website the owner visits
+        - T2 Another device on the local network
+        - T3 An internet scanner
+        - T4 A model file, workflow or extension
+        - T5 The supply chain
+        - T6 Someone who uses the computer or browser later
+        - T7 Whoever receives a shared picture
+        - A threat the profile does not list yet
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What a setup should do, and why
+    validations:
+      required: true
+  - type: textarea
+    id: check
+    attributes:
+      label: How someone would check it
+      description: From outside the tool if possible, so the checker could do it
+  - type: dropdown
+    id: strength
+    attributes:
+      label: MUST or SHOULD
+      options:
+        - MUST (every conforming tool can do it)
+        - SHOULD (some tools would need real effort)
+        - Not sure
