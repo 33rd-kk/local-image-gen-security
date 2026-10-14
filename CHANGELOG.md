@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-10-14)
+
+**The profile (still 0.1: OPS-3 is a SHOULD, so no conformance claim changes)**
+
+- **OPS-3, published advisories** (profile, SHOULD): the owner can find out
+  whether the version they run has published security advisories, and
+  which version fixes them.
+
+**The checker (`ligsp` 0.2.0)**
+
+- **The checker matches versions against advisories**: the ComfyUI and
+  ComfyUI-Manager versions it finds are matched against the advisories
+  those projects publish on GitHub, from a table that ships with the
+  checker (it fetches nothing). A high or critical advisory fails, and the
+  report names each advisory, the fixed version and how old the table is.
+  `tools/update_advisories.py` rebuilds the table, and a weekly workflow
+  opens a pull request with the rebuilt table when it is out of date.
+- **`--follow`**: for a hub (Latentry), the checker also checks every
+  backend it is set up to use, so one command covers the whole setup. It
+  reads only the backends' URLs from the hub, on the computer the hub runs
+  on, and does not follow further.
 - **More servers recognised**: InvokeAI, SwarmUI, Latentry's engine, and
   other servers on Latentry's backend API, each with fixes in its own
   settings.
@@ -14,20 +35,9 @@
   - For other backend-API servers, whose `/api/health` is open by design,
     whether generating needs a login is reported as unknown rather than
     guessed.
-- **`--follow`**: for a hub (Latentry), the checker also checks every
-  backend it is set up to use, so one command covers the whole setup. It
-  reads only the backends' URLs from the hub, on the computer the hub runs
-  on, and does not follow further.
-- **OPS-3, published advisories** (profile, SHOULD): the owner can find out
-  whether the version they run has published security advisories, and
-  which version fixes them.
-- **The checker matches versions against advisories**: the ComfyUI and
-  ComfyUI-Manager versions it finds are matched against the advisories
-  those projects publish on GitHub, from a table that ships with the
-  checker (it fetches nothing). A high or critical advisory fails, and the
-  report names each advisory, the fixed version and how old the table is.
-  `tools/update_advisories.py` rebuilds the table, and a weekly workflow
-  opens a pull request with the rebuilt table when it is out of date.
+
+**The repository**
+
 - A contributing guide, issue forms (a checker problem, a profile change)
   and a pull request template. The README lists the tools that claim
   conformance, starting with Latentry.
