@@ -313,6 +313,10 @@ def test_windows_access_lists(tmp_path: Path) -> None:
     first = file_checks(secret)
     assert [r.status for r in first] == [PASS], [(r.status, r.evidence) for r in first]
     assert {sid for sid, _ in winacl.readers(str(secret))} <= {me, winacl.SYSTEM, winacl.ADMINISTRATORS}
+    # OWNER RIGHTS lets in whoever owns the file: here that is this account (or, elevated, Administrators).
+    subprocess.run([icacls, str(secret), "/grant", "*S-1-3-4:R"], check=True, capture_output=True)
+    assert winacl.OWNER_RIGHTS not in {sid for sid, _ in winacl.readers(str(secret))}
+    assert [r.status for r in file_checks(secret)] == [PASS]
     subprocess.run([icacls, str(secret), "/grant", "*S-1-5-32-545:R"], check=True, capture_output=True)  # BUILTIN\Users
     assert "S-1-5-32-545" in {sid for sid, _ in winacl.readers(str(secret))}
     result = file_checks(secret)[0]

@@ -15,6 +15,7 @@ import sys
 from ctypes import wintypes
 
 SE_FILE_OBJECT = 1
+OWNER_SECURITY_INFORMATION = 0x1
 DACL_SECURITY_INFORMATION = 0x4
 ACCESS_ALLOWED_ACE_TYPE = 0
 INHERIT_ONLY_ACE = 0x08
@@ -23,6 +24,8 @@ READ_RIGHTS = 0x0001 | 0x80000000 | 0x10000000
 
 SYSTEM = "S-1-5-18"
 ADMINISTRATORS = "S-1-5-32-544"
+# Stands for whoever owns the file; it is replaced by the owner's SID.
+OWNER_RIGHTS = "S-1-3-4"
 
 
 class _AclHeader(ctypes.Structure):
@@ -104,13 +107,17 @@ def readers(path: str) -> list[tuple[str, str]] | None:
     """(SID, account name) for every allow entry that lets an account read `path`.
 
     None when the access list cannot be read. A missing access list (a NULL
-    DACL) lets everyone in, and is reported as Everyone.
+    DACL) lets everyone in, and is reported as Everyone. An entry for OWNER
+    RIGHTS is reported as the file's owner, since that is who it lets in.
     """
     if sys.platform != "win32":
         return None
     advapi32, kernel32 = _api()
-    dacl, descriptor = ctypes.c_void_p(), ctypes.c_void_p()
-    status = advapi32.GetNamedSecurityInfoW(path, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, None, None, ctypes.byref(dacl), None, ctypes.byref(descriptor))
+    owner, dacl, descriptor = ctypes.c_void_p(), ctypes.c_void_p(), ctypes.c_void_p()
+    status = advapi32.GetNamedSecurityInfoW(
+        path, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+        ctypes.byref(owner), None, ctypes.byref(dacl), None, ctypes.byref(descriptor),
+    )
     if status != 0:
         return None
     try:
@@ -130,6 +137,8 @@ def readers(path: str) -> list[tuple[str, str]] | None:
                 continue
             sid = ace.value + _AllowedAce.SidStart.offset
             text = _sid_string(advapi32, kernel32, sid)
+            if text == OWNER_RIGHTS and owner.value:
+                sid, text = owner.value, _sid_string(advapi32, kernel32, owner.value)
             if text:
                 found.append((text, _account_name(advapi32, sid) or text))
         return found
