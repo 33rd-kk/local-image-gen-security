@@ -38,6 +38,8 @@ def extension_checks(transport: Transport, base: str, found: Identified, reachab
         return _comfyui(transport, base, reachable_from_network, any_host, versions if versions is not None else {})
     if found.kind == "a1111":
         return _a1111(transport, base)
+    if found.kind == "invokeai":
+        return _invokeai(transport, base, reachable_from_network)
     return []
 
 
@@ -80,3 +82,26 @@ def _a1111(transport: Transport, base: str) -> list[Result]:
     enabled = sum(1 for item in listed if isinstance(item, dict) and item.get("enabled"))
     return [Result("EXT-1", PASS if enabled == 0 else WARN, f"{enabled} extension(s) enabled", [f"{len(listed)} installed, {enabled} enabled"],
                    fixes.WHY["EXT-1"], fixes.fix("EXT-1", "a1111"))]
+
+
+def _invokeai(transport: Transport, base: str, reachable_from_network: bool) -> list[Result]:
+    """InvokeAI 6 installs node packs from a git URL through its API, for its administrator.
+
+    In single-user mode everyone is the administrator. GET /api/v2/custom_nodes/
+    lists the installed packs: only how many is kept (the answer also holds
+    their folders). A 401 or 403 means it asks for an administrator; a 404, a
+    version without the installer.
+    """
+    answer = transport.request("GET", base + "/api/v2/custom_nodes/")
+    if answer is None:
+        return []
+    if answer.status in (401, 403):
+        return [Result("EXT-1", PASS, "Its node-pack installer needs an administrator's login", [f"/api/v2/custom_nodes/: {answer.status}"])]
+    listed = _json(answer)
+    if answer.status == 404 or not isinstance(listed, dict):
+        return [Result("EXT-1", PASS, "No extension installer answered")]
+    packs = listed.get("node_packs")
+    evidence = [f"{len(packs)} node pack(s) installed" if isinstance(packs, list) else "an installer that installs node packs from a git URL"]
+    status = FAIL if reachable_from_network else WARN
+    title = "Its node-pack installer can be used " + ("from the network" if reachable_from_network else "without logging in")
+    return [Result("EXT-1", status, title, evidence, fixes.WHY["EXT-1"], fixes.fix("EXT-1", "invokeai"))]

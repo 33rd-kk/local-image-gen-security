@@ -66,6 +66,9 @@ def needs_login(answer: Answer) -> bool:
     """Whether an answer asks for credentials (or, on Latentry, pairing) instead of serving."""
     if answer.status in (401, 403):
         return True
+    # A redirect to a login page (SwarmUI with user accounts, for one).
+    if 300 <= answer.status < 400 and "login" in (answer.header("location") or "").lower():
+        return True
     if answer.status != 200:
         return False
     try:
@@ -73,6 +76,17 @@ def needs_login(answer: Answer) -> bool:
     except (UnicodeDecodeError, json.JSONDecodeError):
         return False
     return isinstance(data, dict) and data.get("paired") is False
+
+
+def login_required(found: Identified, answer: Answer) -> bool | None:
+    """Whether a server asks for a login, by what its kind tells; None when that cannot be known."""
+    if found.kind == "invokeai" and answer.status not in (401, 403):
+        # Its version endpoint is always open; its multi-user mode is what asks for a login.
+        return bool(found.extra.get("multiuser")) and not found.extra.get("setup_required")
+    if found.kind == "diffusers" and answer.status not in (401, 403):
+        # The backend API keeps /api/health open by design, so it says nothing about generating.
+        return None
+    return needs_login(answer)
 
 
 def with_host(url: str, host: str) -> str:
@@ -108,11 +122,14 @@ def network_checks(transport: Transport, base: str, found: Identified, lan: list
         from_network.append((host, found.answer))
 
     if from_network:
-        open_ones = [(a, r) for a, r in from_network if not needs_login(r)]
-        evidence = [f"{a} answered {r.status}" + (" and asked for a login or pairing" if needs_login(r) else ", usable as is") for a, r in from_network]
+        judged = [(a, r, login_required(found, r)) for a, r in from_network]
+        open_ones = [(a, r) for a, r, login in judged if login is False]
+        unknown = [(a, r) for a, r, login in judged if login is None]
+        words = {True: " and asked for a login or pairing", False: ", usable as is", None: ", and whether it needs a login cannot be read"}
+        evidence = [f"{a} answered {r.status}{words[login]}" for a, r, login in judged]
         if is_loopback(host):
             status = FAIL if open_ones else WARN
-            title = "Reachable from your network" + ("" if open_ones else ", but it asks for a login or pairing")
+            title = "Reachable from your network" + ("" if open_ones or unknown else ", but it asks for a login or pairing")
             net1_evidence = list(evidence)
             if urlsplit(base).scheme == "http":
                 # The profile leaves TLS on the local network open (section 8); say what it means.
@@ -120,6 +137,9 @@ def network_checks(transport: Transport, base: str, found: Identified, lan: list
             results.append(Result("NET-1", status, title, net1_evidence, fixes.WHY["NET-1"], fixes.fix("NET-1", kind)))
         if open_ones:
             results.append(Result("NET-2", FAIL, "Usable from the network without logging in", evidence, fixes.WHY["NET-2"], fixes.fix("NET-2", kind)))
+        elif unknown:
+            results.append(Result("NET-2", UNKNOWN, "Reachable from the network; whether it needs a login to generate cannot be read safely", evidence,
+                                  fixes.WHY["NET-2"], fixes.fix("NET-2", kind)))
         else:
             results.append(Result("NET-2", PASS, "From the network it asks for a login or pairing", evidence))
     else:

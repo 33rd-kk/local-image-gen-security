@@ -26,7 +26,8 @@ needs_second_loopback = pytest.mark.skipif(sys.platform == "darwin", reason="mac
 
 
 def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pairing: bool = False, manager: bool = False,
-                 version: str = "0.39.2", manager_version: str = "V4.2.2", settings: object = None):
+                 version: str = "0.39.2", manager_version: str = "V4.2.2", settings: object = None,
+                 multiuser: bool = False, setup_required: bool = False, token: bool = True):
     class Handler(BaseHTTPRequestHandler):
         seen: ClassVar[list[tuple[str, str, str]]] = []
 
@@ -61,6 +62,35 @@ def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pai
             if kind == "latentry" and self.path == "/api/pair":
                 local = self.client_address[0] == "127.0.0.1" and host == "127.0.0.1"
                 return self._send(200, {"local": True} if local or not pairing else {"paired": False})
+            if kind == "invokeai" and self.path == "/api/v1/app/version":
+                return self._send(200, {"version": "6.14.2"})
+            if kind == "invokeai" and self.path == "/api/v2/custom_nodes/":
+                if multiuser:
+                    return self._send(401, {"detail": "Authentication required"})
+                return self._send(200, {"node_packs": [{"name": "pack", "path": "C:/Users/someone/nodes/pack"}], "custom_nodes_path": "C:/Users/someone/nodes"})
+            if kind == "invokeai" and self.path == "/api/v1/auth/status":
+                return self._send(200, {"setup_required": setup_required, "multiuser_enabled": multiuser, "strict_password_checking": False,
+                                        "admin_email": "owner@example.invalid" if setup_required else None})
+            if kind in ("engine", "diffusers") and self.path == "/api/health":
+                return self._send(200, {"status": "ok", **({"engine": "latentry", "version": "0.6.1"} if kind == "engine" else {})})
+            if kind == "engine" and self.path == "/api/models":
+                if token:
+                    return self._send(401, {"detail": "token"})
+                return self._send(200, {"models_dir": "C:/Users/someone/models-folder", "models": []})
+            if kind == "swarmui" and self.path == "/Text2Image":
+                if multiuser:  # accounts on: off to the login page
+                    self.send_response(302)
+                    self.send_header("Location", "/Login")
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return None
+                page = b"<html><head><title>Generate - SwarmUI - Local</title></head></html>"
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Length", str(len(page)))
+                self.end_headers()
+                self.wfile.write(page)
+                return None
             if self.path == "/":
                 return self._send(200, {"page": True}, {"X-Frame-Options": "DENY", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "same-origin"})
             return self._send(404, {"error": "not found"})
@@ -476,3 +506,77 @@ def test_without_follow_the_settings_are_never_asked() -> None:
     with server("latentry", settings={"backends": []}) as (hub_url, handler):
         cli.check_server(Transport(), hub_url, [])
     assert not any(path == "/api/settings" for _, path, _ in handler.seen)
+
+
+# ── More servers: InvokeAI, SwarmUI, diffusers servers, Latentry's engine ──
+
+
+@needs_second_loopback
+def test_invokeai_in_single_user_mode_on_the_network_fails_net_2() -> None:
+    with server("invokeai", bind="0.0.0.0") as (url, _):
+        target = cli.check_server(Transport(), url, [OTHER_ADDRESS])
+    assert (target.kind, target.version) == ("invokeai", "6.14.2")
+    assert by_id(target, "NET-2")[0].status == FAIL
+    assert "invokeai.yaml" in by_id(target, "NET-1")[0].fix
+
+
+@needs_second_loopback
+def test_invokeai_with_accounts_passes_net_2() -> None:
+    with server("invokeai", bind="0.0.0.0", multiuser=True) as (url, _):
+        target = cli.check_server(Transport(), url, [OTHER_ADDRESS])
+    assert by_id(target, "NET-2")[0].status == PASS
+    assert by_id(target, "AUTH-1") == []
+
+
+def test_invokeai_accounts_with_no_administrator_yet_are_flagged_and_the_email_is_not_kept() -> None:
+    with server("invokeai", multiuser=True, setup_required=True) as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    assert by_id(target, "AUTH-1")[0].status == WARN
+    assert "owner@example.invalid" not in json.dumps(target.to_json())
+
+
+def test_latentrys_engine_needs_its_token() -> None:
+    with server("engine") as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    assert (target.kind, target.version) == ("latentry-engine", "0.6.1")
+    assert by_id(target, "BE-2")[0].status == PASS
+    with server("engine", token=False) as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    assert by_id(target, "BE-2")[0].status == WARN
+    assert "models-folder" not in json.dumps(target.to_json())
+    assert by_id(target, "WEB-3") == []  # an API-only server has no page to check
+
+
+@needs_second_loopback
+def test_a_diffusers_server_on_the_network_is_not_judged_by_its_open_health_endpoint() -> None:
+    with server("diffusers", bind="0.0.0.0") as (url, _):
+        target = cli.check_server(Transport(), url, [OTHER_ADDRESS])
+    assert target.kind == "diffusers"
+    assert by_id(target, "NET-1")[0].status == WARN
+    assert by_id(target, "NET-2")[0].status == "unknown"
+
+
+def test_swarmui_is_recognised_with_and_without_accounts() -> None:
+    from ligsp.net import needs_login
+
+    with server("swarmui") as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    assert target.kind == "swarmui"
+    with server("swarmui", multiuser=True) as (url, _):
+        transport = Transport()
+        transport.allow_url(url)
+        from ligsp.targets import identify
+
+        found = identify(transport, url)
+    assert found.kind == "swarmui" and needs_login(found.answer)
+
+
+def test_invokeais_node_pack_installer_is_ext_1_and_its_folders_are_not_kept() -> None:
+    with server("invokeai") as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    ext = by_id(target, "EXT-1")[0]
+    assert ext.status == WARN and ext.evidence == ["1 node pack(s) installed"]
+    assert "someone" not in json.dumps(target.to_json())
+    with server("invokeai", multiuser=True) as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    assert by_id(target, "EXT-1")[0].status == PASS
