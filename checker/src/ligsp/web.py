@@ -42,7 +42,7 @@ def web_checks(transport: Transport, base: str, found: Identified, reachable_fro
     elif found.answer is not None and rebound.status == found.answer.status:
         status = FAIL if reachable_from_network else WARN
         results.append(
-            Result("WEB-2", status, "Answers for any host name, so a web page could drive it through DNS rebinding", [f"{FOREIGN_HOST}: {rebound.status}"],
+            Result("WEB-2", status, "Does not check host names, so a web page may reach it through DNS rebinding", [f"{FOREIGN_HOST}: {rebound.status}"],
                    fixes.WHY["WEB-2"], fixes.fix("WEB-2", kind))
         )
     else:

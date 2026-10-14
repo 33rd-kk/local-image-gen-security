@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Findings say precisely what was seen**: WEB-2 now reads "Does not check
+  host names, so a web page may reach it through DNS rebinding", and its
+  reason explains DNS rebinding as it works. MOD-1 says "a pickle-format
+  extension", since the name alone does not prove the format, and WEB-1's
+  reason is about reading answers (what CORS allows), not driving the
+  server. The README and the code notes say that unneeded fields are
+  discarded, not left unread: the checker does read an answer, then keeps
+  only what a check needs.
+
 - **A correction**: the checker's README and notes said ComfyUI-Manager
   removes and restores snapshots on a GET. Its releases from 2024 did; its
   current ones use POST. The checker's rule (only fixed endpoints known to

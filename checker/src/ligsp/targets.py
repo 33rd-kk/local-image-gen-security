@@ -1,7 +1,7 @@
 """Telling what kind of server a URL is, from endpoints that change nothing.
 
 Only the fields named here are read from an answer; everything else in it
-is dropped unread (ComfyUI's /system_stats also lists the server's command
+is discarded, never kept (ComfyUI's /system_stats also lists the server's command
 line, InvokeAI's auth status can name its administrator, Latentry's engine
 lists its models folder).
 """
@@ -69,7 +69,7 @@ def identify(transport: Transport, base: str) -> Identified:
         status = _json(transport.request("GET", base + "/api/v1/auth/status"))
         extra = {}
         if isinstance(status, dict):
-            # Only these two; admin_email is dropped unread.
+            # Only these two are kept; admin_email is discarded.
             extra = {"multiuser": status.get("multiuser_enabled") is True, "setup_required": status.get("setup_required") is True}
         return Identified("invokeai", data["version"], "/api/v1/app/version", answer, extra)
 
