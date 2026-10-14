@@ -1,7 +1,12 @@
-# Whether the checker's advisory table (checker/src/ligsp/advisory_data.py)
-# still matches what ComfyUI and ComfyUI-Manager publish. Weekly; when it is
-# out of date, it opens (or comments on) an issue, and a maintainer runs
-# tools/update_advisories.py and releases. The checker itself never fetches.
+# Keeps the checker's advisory table (checker/src/ligsp/advisory_data.py) in
+# step with what ComfyUI and ComfyUI-Manager publish. Weekly: it rebuilds the
+# table, and when the advisories differ, it runs the tests and opens (or
+# updates) a pull request on the branch "advisories/update" for a maintainer
+# to review and merge. The checker itself never fetches.
+#
+# A pull request opened with this workflow's token starts no other
+# workflows (GitHub's rule), so the tests run here first, and the pull
+# request says how to run CI on it.
 name: Advisory table
 
 on:
@@ -13,11 +18,11 @@ permissions:
   contents: read
 
 jobs:
-  compare:
+  update:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      issues: write # to say the table is out of date
+      contents: write # push the branch advisories/update; nothing here pushes to main
+      pull-requests: write # open or update its pull request
     defaults:
       run:
         working-directory: checker
@@ -42,16 +47,25 @@ jobs:
             git diff -I '^DATA_AS_OF = ' --stat -- src/ligsp/advisory_data.py
             echo "stale=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Open or update the issue
+      - name: Test with the new table
+        if: steps.compare.outputs.stale == 'true'
+        run: |
+          pip install -e . pytest
+          pytest -q
+      - name: Open or update the pull request
         if: steps.compare.outputs.stale == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          title="The advisory table is out of date"
-          body="ComfyUI or ComfyUI-Manager published or changed an advisory. Run \`python tools/update_advisories.py\` in \`checker/\`, check the diff, and release. (Run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
-          number=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
-          if [ -n "$number" ]; then
-            gh issue comment "$number" --repo "$GITHUB_REPOSITORY" --body "$body"
-          else
-            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          branch=advisories/update
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add src/ligsp/advisory_data.py
+          git commit -m "Update the advisory table"
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$branch"
+          title="Update the advisory table"
+          body="ComfyUI or ComfyUI-Manager published or changed an advisory, so \`advisory_data.py\` was rebuilt by \`tools/update_advisories.py\`. The tests passed with it in the workflow run (${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}). Close and reopen this pull request to run CI on it. Check the diff, merge, and release."
+          if [ -z "$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "$title" --body "$body"
           fi

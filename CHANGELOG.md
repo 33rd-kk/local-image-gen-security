@@ -11,7 +11,7 @@
   checker (it fetches nothing). A high or critical advisory fails, and the
   report names each advisory, the fixed version and how old the table is.
   `tools/update_advisories.py` rebuilds the table, and a weekly workflow
-  opens an issue when it is out of date.
+  opens a pull request with the rebuilt table when it is out of date.
 - A contributing guide, issue forms (a checker problem, a profile change)
   and a pull request template. The README lists the tools that claim
   conformance, starting with Latentry.
