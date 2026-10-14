@@ -32,7 +32,7 @@ checks any other web server with the general checks.
 | WEB-1 | Whether other websites may read its answers (CORS) |
 | WEB-2 | Whether it answers for any host name (DNS rebinding) |
 | WEB-3 | Protective headers on its page |
-| EXT-1 | An extension installer on the server (ComfyUI-Manager), and how many node packs or A1111 extensions it runs (counts only, never names) |
+| EXT-1 | An extension installer on the server (ComfyUI-Manager, InvokeAI's node-pack installer), and how many node packs or A1111 extensions it runs (counts only, never names or folders) |
 | BE-2 | Whether Latentry's engine needs its token (its model list, asked without one) |
 | AUTH-1 | InvokeAI with accounts turned on but no administrator yet, so whoever opens it first becomes one |
 | OPS-3 | Whether the ComfyUI or ComfyUI-Manager version running has a published security advisory, from a table that ships with the checker (nothing is fetched); the report says how old the table is |

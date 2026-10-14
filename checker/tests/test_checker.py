@@ -64,6 +64,10 @@ def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pai
                 return self._send(200, {"local": True} if local or not pairing else {"paired": False})
             if kind == "invokeai" and self.path == "/api/v1/app/version":
                 return self._send(200, {"version": "6.14.2"})
+            if kind == "invokeai" and self.path == "/api/v2/custom_nodes/":
+                if multiuser:
+                    return self._send(401, {"detail": "Authentication required"})
+                return self._send(200, {"node_packs": [{"name": "pack", "path": "C:/Users/someone/nodes/pack"}], "custom_nodes_path": "C:/Users/someone/nodes"})
             if kind == "invokeai" and self.path == "/api/v1/auth/status":
                 return self._send(200, {"setup_required": setup_required, "multiuser_enabled": multiuser, "strict_password_checking": False,
                                         "admin_email": "owner@example.invalid" if setup_required else None})
@@ -565,3 +569,14 @@ def test_swarmui_is_recognised_with_and_without_accounts() -> None:
 
         found = identify(transport, url)
     assert found.kind == "swarmui" and needs_login(found.answer)
+
+
+def test_invokeais_node_pack_installer_is_ext_1_and_its_folders_are_not_kept() -> None:
+    with server("invokeai") as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    ext = by_id(target, "EXT-1")[0]
+    assert ext.status == WARN and ext.evidence == ["1 node pack(s) installed"]
+    assert "someone" not in json.dumps(target.to_json())
+    with server("invokeai", multiuser=True) as (url, _):
+        target = cli.check_server(Transport(), url, [])
+    assert by_id(target, "EXT-1")[0].status == PASS

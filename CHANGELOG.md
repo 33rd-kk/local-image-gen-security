@@ -6,7 +6,9 @@
   other servers on Latentry's backend API, each with fixes in its own
   settings.
   - InvokeAI: login is judged by its multi-user mode. AUTH-1 flags
-    accounts that are on but have no administrator yet.
+    accounts that are on but have no administrator yet. EXT-1 flags its
+    node-pack installer (it installs from a git URL) when it can be used
+    without logging in.
   - SwarmUI: also recognised when its page sends you to its login page.
   - Latentry's engine: BE-2 checks that it needs its token.
   - For other backend-API servers, whose `/api/health` is open by design,

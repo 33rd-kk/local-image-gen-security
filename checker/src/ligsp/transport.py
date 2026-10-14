@@ -35,6 +35,7 @@ SAFE_PATHS = (
     "/api/models",  # Latentry's engine only (asked once /api/health says so): its model list, read-only
     "/api/v1/app/version",  # InvokeAI: its version
     "/api/v1/auth/status",  # InvokeAI: whether multi-user mode is on and set up
+    "/api/v2/custom_nodes/",  # InvokeAI: its installed node packs (only the count is kept); installing is a POST
     "/Text2Image",  # SwarmUI: its main page (GET / only redirects there)
 )
 MAX_BODY = 256 * 1024
