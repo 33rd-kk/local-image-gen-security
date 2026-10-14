@@ -1,0 +1,11 @@
+# The checker has no dependencies, so only the workflows' actions are kept
+# current: weekly, grouped.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

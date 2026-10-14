@@ -354,3 +354,21 @@ def test_plain_http_on_the_network_is_said() -> None:
     with server("latentry", bind="0.0.0.0", pairing=True, check_host=True) as (url, _):
         target = cli.check_server(Transport(), url, [OTHER_ADDRESS])
     assert any("unencrypted" in item for item in by_id(target, "NET-1")[0].evidence)
+
+
+# ── The repository itself ────────────────────────────────────────────────
+
+
+def test_no_control_characters_in_the_repository() -> None:
+    """A NUL written by a scripted edit once broke a merge in a sister project."""
+    root = Path(__file__).resolve().parents[2]
+    bad = []
+    for path in root.rglob("*"):
+        if not path.is_file() or any(part in (".git", ".ruff_cache", "__pycache__", "private") or part.endswith(".egg-info") for part in path.parts):
+            continue
+        if path.suffix.lower() not in (".py", ".md", ".toml", ".yml", ".yaml", ".txt", ""):
+            continue
+        data = path.read_bytes()
+        if any(b < 32 and b not in (9, 10, 13) for b in data):
+            bad.append(path.relative_to(root).as_posix())
+    assert bad == []
