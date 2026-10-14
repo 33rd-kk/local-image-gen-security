@@ -2,7 +2,7 @@
 
 Latentry lists them at GET /api/settings, which answers only to the computer
 it runs on and changes nothing. Of its answer only each backend's `url` is
-kept; folders, model names and everything else are dropped unread. Tokens
+kept; folders, model names and everything else are discarded. Tokens
 are never in it.
 """
 

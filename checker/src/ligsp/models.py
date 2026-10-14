@@ -83,16 +83,16 @@ def model_checks(folder: Path) -> list[Result]:
         )
     if pickles_alone:
         results.append(
-            Result("MOD-1", FAIL, f"{len(pickles_alone)} weight file(s) only in a pickle format, which can run code when loaded",
+            Result("MOD-1", FAIL, f"{len(pickles_alone)} weight file(s) with a pickle-format extension and no .safetensors beside them",
                    _listed(pickles_alone), fixes.WHY["MOD-1"], fixes.fix("MOD-1", "models"))
         )
     if pickles_beside:
         results.append(
-            Result("MOD-1", WARN, f"{len(pickles_beside)} pickle-format file(s) next to .safetensors files (most loaders read the .safetensors one)",
+            Result("MOD-1", WARN, f"{len(pickles_beside)} file(s) with a pickle-format extension next to .safetensors files (most loaders read the .safetensors one)",
                    _listed(pickles_beside), fixes.WHY["MOD-1"], fixes.fix("MOD-1", "models"))
         )
     if not pickles_alone and not pickles_beside and not disguised:
-        results.append(Result("MOD-1", PASS, f"No pickle-format weight files ({safetensors} .safetensors files)"))
+        results.append(Result("MOD-1", PASS, f"No weight files with a pickle-format extension ({safetensors} .safetensors files)"))
     if broken:
         results.append(Result("MOD-1", WARN, f"{len(broken)} .safetensors file(s) with a header that does not read", _listed(broken),
                               "A damaged or disguised file.", "Download it again from where it came from, and compare its SHA-256."))

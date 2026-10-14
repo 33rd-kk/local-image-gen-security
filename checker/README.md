@@ -37,7 +37,7 @@ checks any other web server with the general checks.
 | AUTH-1 | InvokeAI with accounts turned on but no administrator yet, so whoever opens it first becomes one |
 | OPS-3 | Whether the ComfyUI or ComfyUI-Manager version running has a published security advisory, from a table that ships with the checker (nothing is fetched); the report says how old the table is |
 | DATA-4 | Who besides you can read a hub's private files (`--private FILE` or a folder; Latentry's settings and keys are found by name). Only permissions are read, never content. |
-| MOD-1 | Weight files in a pickle format (`.ckpt`, `.pt`, `.pth`, `.bin`, `.pkl`), files named `.safetensors` that are really pickles, and safetensors headers that do not read |
+| MOD-1 | Weight files with a pickle-format extension (`.ckpt`, `.pt`, `.pth`, `.bin`, `.pkl`) and no `.safetensors` beside them, files named `.safetensors` that are really pickles, and safetensors headers that do not read |
 
 Exit code 0 when nothing failed, 1 when something failed, 2 for a usage
 error. `--json FILE` (or `-`) writes the same report as JSON.
@@ -52,10 +52,10 @@ error. `--json FILE` (or `-`) writes the same report as JSON.
   releases from 2024 removed and restored snapshots on one). It never queues a job, uploads a
   file or changes a setting.
 - It reads only the fields it needs. ComfyUI's `/system_stats` also lists
-  the server's command line; that is dropped unread.
+  the server's command line; that is discarded, never kept or shown.
 - With `--follow` it reads a hub's backend list (Latentry's `/api/settings`,
   which answers only on the computer the hub runs on) and keeps only each
-  backend's URL. Folders, model names and the rest are dropped unread, and
+  backend's URL. Folders, model names and the rest are discarded, and
   the backends' own backends are not followed.
 - In model folders it opens only `.safetensors` files, and only to read
   their header. It follows no links out of the folder.
