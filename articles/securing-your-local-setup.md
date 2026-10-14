@@ -68,7 +68,8 @@ ComfyUI 0.39.2 at http://127.0.0.1:8188
   PASS  NET-1  Not reachable from your network
   PASS  NET-2  Only this computer can reach it, so no login is needed
   PASS  WEB-1  Does not let other websites read its answers
-  PASS  OPS-3  ComfyUI 0.39.2: no published advisory applies (as of 2026-10-14)
+  PASS  OPS-3  ComfyUI 0.39.2: no advisory in the checker's data matches (as of 2026-10-14)
+               Covers ComfyUI core only: its frontend package is versioned separately, and its advisories are not checked
 
 Summary: 0 failed, 3 warnings, 4 passed, 0 not checked
 ```
