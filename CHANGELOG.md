@@ -1,0 +1,38 @@
+# Changelog
+
+## 0.1.0 (2026-10-14)
+
+The first public draft.
+
+**The profile (LIGSP 0.1, draft)**
+
+- The threats it covers: a website you visit, another device on your
+  network, internet scanners, model files and extensions, swapped
+  downloads, later users of the computer, and whoever receives a picture.
+- Two levels: this computer only (1) and the local network (2).
+- Requirements in ten groups, each with MUST or SHOULD, its reason and how
+  to check it: network exposure, browser-facing HTTP, devices, hubs and
+  servers, model files, extensions, the tool's own supply chain, data,
+  metadata in pictures, and telling the owner.
+
+**The checker (`ligsp` 0.1.0)**
+
+- `ligsp check URL ... [--models DIR] [--private PATH] [--json FILE] [--redact]`
+- It recognises ComfyUI, AUTOMATIC1111 / Forge and Latentry, and checks
+  other web servers generically.
+- It checks:
+  - NET-1: reachable from the network (IPv4 and IPv6);
+  - NET-2: usable without a login;
+  - BE-1: plain HTTP to another computer;
+  - WEB-1: CORS for other sites;
+  - WEB-2: answering any host name (DNS rebinding);
+  - WEB-3: protective headers;
+  - EXT-1: an extension installer, and how many extensions run;
+  - MOD-1: pickle-format weights, also when disguised as `.safetensors`;
+  - DATA-4: who besides you can read a hub's private files, by SID on
+    Windows.
+- It only reads: GET, HEAD and OPTIONS, to a fixed list of endpoints known
+  to change nothing, at the addresses you name and this computer's own. It
+  sends no telemetry.
+- Standard library only, Python 3.10 or newer, tested on Linux, Windows and
+  macOS.
