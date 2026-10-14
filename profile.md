@@ -9,8 +9,9 @@ Image generation runs on people's own computers. Typically a web UI or hub
 drives a generation server (ComfyUI, an A1111-style web UI, a diffusers
 server), loads model files from the internet, and runs extensions written by
 strangers. Most of these tools were built for one person on one machine.
-Many have no login and run downloaded code. Once one of them is reached from
-a network, it can be taken over.
+Many have no login by default and run downloaded code. Once one of them is
+reached from a network, others may be able to use it, read its outputs or
+install code on it, depending on its settings.
 
 This profile states what a setup must do to be **secure by default**. That
 means it is safe as installed, with no hardening steps, and it stays safe
