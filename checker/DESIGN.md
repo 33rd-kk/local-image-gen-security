@@ -115,8 +115,11 @@ The JSON form uses the same structure: `{ "profile": "0.1", "checker": "x.y.z",
    published to PyPI with Trusted Publishing (poseorbit's recipe).
 2. **In the profile's repository**, as `checker/`, so that a change to a
    requirement and to its check land together.
-3. **Working name for now.** The profile and the checker get their names
-   just before publishing; npm, PyPI and GitHub are checked then.
+3. **Name (decided 2026-10-14):** Local Image Generation Security Profile
+   (LIGSP). The repository and the PyPI package are `local-image-gen-security`,
+   the Python package is `ligsp`, and both `ligsp` and
+   `local-image-gen-security` start the checker. PyPI, npm and GitHub were
+   checked for the name and for the acronym.
 4. **Explicit URLs only.** No default ports are tried (see Usage).
 
 ## Layout

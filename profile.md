@@ -1,6 +1,6 @@
-# Secure Local Generation Profile
+# Local Image Generation Security Profile (LIGSP)
 
-**Version:** 0.1 draft (not published)
+**Version:** 0.1 draft
 **Status:** working draft, every requirement is open to change
 
 ## 1. Purpose

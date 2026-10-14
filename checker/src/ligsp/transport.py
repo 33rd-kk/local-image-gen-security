@@ -32,7 +32,7 @@ SAFE_PATHS = (
     "/api/pair",  # Latentry: whether this device is paired
 )
 MAX_BODY = 256 * 1024
-USER_AGENT = "profilecheck (read-only security check)"
+USER_AGENT = "ligsp (read-only security check)"
 
 
 class RefusedRequest(Exception):

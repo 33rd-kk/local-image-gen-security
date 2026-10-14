@@ -1,4 +1,4 @@
-"""profilecheck against fake servers on this computer and fake model folders."""
+"""ligsp against fake servers on this computer and fake model folders."""
 
 from __future__ import annotations
 
@@ -13,10 +13,10 @@ from typing import ClassVar
 
 import pytest
 
-from profilecheck import __main__ as cli
-from profilecheck.models import model_checks
-from profilecheck.results import FAIL, PASS, WARN
-from profilecheck.transport import RefusedRequest, Transport
+from ligsp import __main__ as cli
+from ligsp.models import model_checks
+from ligsp.results import FAIL, PASS, WARN
+from ligsp.transport import RefusedRequest, Transport
 
 # A second loopback address stands in for "this computer's LAN address": a
 # server bound to 127.0.0.1 does not answer on it, one bound to 0.0.0.0 does.
@@ -251,7 +251,7 @@ def test_comfyui_manager_reachable_from_the_network_fails() -> None:
 
 
 def test_ipv6_addresses_are_put_in_brackets() -> None:
-    from profilecheck.net import with_host
+    from ligsp.net import with_host
 
     assert with_host("http://127.0.0.1:8188/system_stats", "fd00::5") == "http://[fd00::5]:8188/system_stats"
     assert with_host("http://127.0.0.1:8188/x", "192.168.1.5") == "http://192.168.1.5:8188/x"
@@ -260,7 +260,7 @@ def test_ipv6_addresses_are_put_in_brackets() -> None:
 def test_own_addresses_are_never_loopback_or_link_local() -> None:
     import ipaddress
 
-    from profilecheck.net import own_lan_addresses
+    from ligsp.net import own_lan_addresses
 
     for address in own_lan_addresses():
         ip = ipaddress.ip_address(address)
@@ -274,7 +274,7 @@ posix_only = pytest.mark.skipif(sys.platform == "win32", reason="POSIX modes")
 
 
 def test_a_folder_is_searched_for_known_private_files(tmp_path: Path) -> None:
-    from profilecheck.files import file_checks, private_files
+    from ligsp.files import file_checks, private_files
 
     (tmp_path / "latentry.settings.json").write_text("{}")
     (tmp_path / "notes.txt").write_text("not private")
@@ -284,7 +284,7 @@ def test_a_folder_is_searched_for_known_private_files(tmp_path: Path) -> None:
 
 @posix_only
 def test_posix_modes(tmp_path: Path) -> None:
-    from profilecheck.files import file_checks
+    from ligsp.files import file_checks
 
     secret = tmp_path / "latentry.pairing-key"
     secret.write_text("k")
@@ -300,7 +300,7 @@ def test_windows_access_lists(tmp_path: Path) -> None:
     import os
     import subprocess
 
-    from profilecheck.files import file_checks
+    from ligsp.files import file_checks
 
     icacls = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "icacls.exe")
     secret = tmp_path / "latentry.pairing-key"

@@ -3,16 +3,31 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "profilecheck"
+name = "local-image-gen-security"
 version = "0.1.0.dev0"
-description = "Checks a local image-generation setup against the Secure Local Generation Profile: read-only, only where you point it"
+description = "Checks a local image-generation setup (ComfyUI, A1111 / Forge, hubs, model folders) against the Local Image Generation Security Profile: read-only, only where you point it"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "33rd-kk" }]
+keywords = ["security", "comfyui", "stable-diffusion", "image-generation", "safetensors", "checker"]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Security",
+]
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/33rd-kk/local-image-gen-security"
+Issues = "https://github.com/33rd-kk/local-image-gen-security/issues"
+
 [project.scripts]
-profilecheck = "profilecheck.__main__:main"
+ligsp = "ligsp.__main__:main"
+local-image-gen-security = "ligsp.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

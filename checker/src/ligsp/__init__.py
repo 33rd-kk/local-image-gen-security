@@ -1,4 +1,4 @@
-"""Checks a local image-generation setup against the Secure Local Generation Profile.
+"""Checks a local image-generation setup against the Local Image Generation Security Profile.
 
 Read-only: it sends GET, HEAD and OPTIONS only, to the servers you name and
 to this computer's own addresses, and opens model files only to read

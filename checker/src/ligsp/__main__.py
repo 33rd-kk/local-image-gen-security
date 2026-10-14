@@ -1,4 +1,4 @@
-"""profilecheck check URL ... [--models DIR ...] [--json FILE] [--redact]"""
+"""ligsp check URL ... [--models DIR ...] [--json FILE] [--redact]"""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ DEFAULT_PORTS = "ComfyUI 8188, Comfy Desktop 8000, A1111 / Forge 7860, Latentry 
 
 DESCRIPTION = f"""\
 Checks the image-generation servers and model folders you name against the
-Secure Local Generation Profile. Read-only: it sends GET, HEAD and OPTIONS
+Local Image Generation Security Profile. Read-only: it sends GET, HEAD and OPTIONS
 only, to the URLs you give and to the same port on this computer's own
 network addresses, and it reads only the headers of .safetensors files.
 It tries no other ports. Common defaults: {DEFAULT_PORTS}.
@@ -44,8 +44,8 @@ def check_server(transport: Transport, url: str, lan: list[str]) -> Target:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="profilecheck", description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--version", action="version", version=f"profilecheck {__version__}")
+    parser = argparse.ArgumentParser(prog="ligsp", description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--version", action="version", version=f"ligsp {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
     check = sub.add_parser("check", help="check servers and model folders", description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
     check.add_argument("urls", nargs="*", metavar="URL", help="a server to check, e.g. http://127.0.0.1:8188")

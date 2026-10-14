@@ -1,0 +1,15 @@
+Local Image Generation Security Profile (LIGSP)
+Copyright 2026 33rd-kk
+
+The profile (profile.md and the other documents outside checker/) is
+licensed under the Creative Commons Attribution 4.0 International License
+(see LICENSE-CC-BY-4.0). The checker (checker/) is licensed under the
+Apache License, Version 2.0 (see checker/LICENSE).
+
+The checker uses only Python's standard library. It includes no
+third-party code.
+
+The names of other projects (ComfyUI, ComfyUI-Manager, AUTOMATIC1111
+stable-diffusion-webui, Forge, InvokeAI, SwarmUI, Latentry) are used only
+to say what the checker recognises and how to change their settings. This
+implies no endorsement by them.

@@ -1,14 +1,14 @@
-# profilecheck (working name)
+# ligsp: the LIGSP checker
 
 Checks the image-generation servers and model folders you name against the
-Secure Local Generation Profile ([../profile.md](../profile.md)). It is
+Local Image Generation Security Profile ([profile.md](https://github.com/33rd-kk/local-image-gen-security/blob/main/profile.md)). It is
 read-only, and it contacts only the places you point it at.
 
 ```
-profilecheck check http://127.0.0.1:8188                      # a ComfyUI
-profilecheck check http://127.0.0.1:7860 --models D:\models   # A1111 / Forge and a model folder
-profilecheck check http://127.0.0.1:3000 --redact             # a report you can share
-profilecheck check --private C:\latentry                       # who can read Latentry's settings and keys
+ligsp check http://127.0.0.1:8188                      # a ComfyUI
+ligsp check http://127.0.0.1:7860 --models D:\models   # A1111 / Forge and a model folder
+ligsp check http://127.0.0.1:3000 --redact             # a report you can share
+ligsp check --private C:\latentry                       # who can read Latentry's settings and keys
 ```
 
 Common default ports: ComfyUI 8188, Comfy Desktop 8000, A1111 / Forge 7860,

@@ -63,7 +63,7 @@ def as_text(targets: list[Target], redact: Redactor) -> str:
         lines.append("")
     counts = summary(targets)
     lines.append(f"Summary: {counts[FAIL]} failed, {counts[WARN]} warnings, {counts[PASS]} passed, {counts[UNKNOWN]} not checked")
-    lines.append(f"Profile {PROFILE_VERSION}, profilecheck {__version__}. A pass means these checks found no problem, not that the setup is safe.")
+    lines.append(f"Profile {PROFILE_VERSION}, ligsp {__version__}. A pass means these checks found no problem, not that the setup is safe.")
     return "\n".join(lines)
 
 

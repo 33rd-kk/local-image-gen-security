@@ -1,0 +1,5 @@
+local-image-gen-security (the LIGSP checker)
+Copyright 2026 33rd-kk
+
+Licensed under the Apache License, Version 2.0 (see LICENSE). It uses
+only Python's standard library and includes no third-party code.
