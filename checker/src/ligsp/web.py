@@ -10,6 +10,8 @@ from .transport import Transport
 FOREIGN_ORIGIN = "http://example.invalid"
 FOREIGN_HOST = "rebind.example.invalid"
 PAGE_TIMEOUT = 20.0
+# Servers with no page of their own, only an API.
+API_ONLY = ("latentry-engine", "diffusers")
 
 
 def web_checks(transport: Transport, base: str, found: Identified, reachable_from_network: bool) -> list[Result]:
@@ -46,7 +48,10 @@ def web_checks(transport: Transport, base: str, found: Identified, reachable_fro
     else:
         results.append(Result("WEB-2", PASS, "Answers differently for a host name it does not know", [f"{FOREIGN_HOST}: {rebound.status}"]))
 
-    # WEB-3: headers on its page.
+    # WEB-3: headers on its page. Servers that only have an API (no page for a
+    # browser to show or frame) are left out.
+    if kind in API_ONLY:
+        return results
     # A development server builds a page on its first request, which can take a while.
     page = transport.request("GET", base.rstrip("/") + "/", timeout=PAGE_TIMEOUT)
     if page is None:

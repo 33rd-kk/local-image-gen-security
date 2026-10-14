@@ -540,6 +540,7 @@ def test_latentrys_engine_needs_its_token() -> None:
         target = cli.check_server(Transport(), url, [])
     assert by_id(target, "BE-2")[0].status == WARN
     assert "models-folder" not in json.dumps(target.to_json())
+    assert by_id(target, "WEB-3") == []  # an API-only server has no page to check
 
 
 @needs_second_loopback
