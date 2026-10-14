@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.2 (2026-10-15)
+
+Wording only: what the checker sends and reads is unchanged. The advisory
+table was rebuilt (the same 7 advisories, as of 2026-10-15).
+
 - **An OPS-3 pass says what it covers**: it now reads "no advisory in the
   checker's data matches (as of DATE)" instead of "no published advisory
   applies", and every OPS-3 result for ComfyUI notes that it covers ComfyUI
