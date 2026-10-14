@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **An introduction for readers new to LIGSP**:
+  [articles/securing-your-local-setup.md](articles/securing-your-local-setup.md)
+  explains the common issues, how to read a report, what the checker will
+  not do, fixes for each tool and its limits (for example, an OPS-3 pass
+  covers ComfyUI core and ComfyUI-Manager only, not the ComfyUI frontend).
+  The README links it. The README's opening and the profile's Purpose
+  (section 1, not a requirement) now say what an exposed server may allow,
+  depending on its settings, instead of "it can be taken over".
+
 ## 0.2.1 (2026-10-14)
 
 Wording only: what the checker sends and reads is unchanged.

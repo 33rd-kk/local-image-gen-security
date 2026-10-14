@@ -4,8 +4,9 @@ Image generation runs on people's own computers: a web UI or hub drives a
 generation server (ComfyUI, AUTOMATIC1111 / Forge, a diffusers server),
 loads model files from the internet and runs extensions written by others.
 Most of these tools were made for one person on one machine. Many have no
-login, and can run downloaded code. Once one of them can be reached from a
-network, it can be taken over.
+login by default, and can run downloaded code. Once one of them can be
+reached from a network, others may be able to use it, read its outputs or
+install code on it, depending on its settings.
 
 LIGSP says what such a setup must do to be **secure by default**: safe as
 installed, and still safe when you turn on what you want, such as using it
@@ -19,6 +20,9 @@ from your phone. It has three parts:
 - **Conformance tables**: how a tool meets each requirement.
   [Latentry](https://github.com/33rd-kk/latentry) is the reference
   implementation (see below).
+
+For a longer introduction, with fixes for each tool, read
+[Securing your local image generation setup](articles/securing-your-local-setup.md).
 
 Status: **0.1 draft**. Requirements may still change, and feedback is
 welcome (see Contributing).
