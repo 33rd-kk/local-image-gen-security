@@ -26,6 +26,7 @@ name.
 | WEB-2 | Whether it answers for any host name (DNS rebinding) |
 | WEB-3 | Protective headers on its page |
 | EXT-1 | An extension installer on the server (ComfyUI-Manager), and how many node packs or A1111 extensions it runs (counts only, never names) |
+| OPS-3 | Whether the ComfyUI or ComfyUI-Manager version running has a published security advisory, from a table that ships with the checker (nothing is fetched); the report says how old the table is |
 | DATA-4 | Who besides you can read a hub's private files (`--private FILE` or a folder; Latentry's settings and keys are found by name). Only permissions are read, never content. |
 | MOD-1 | Weight files in a pickle format (`.ckpt`, `.pt`, `.pth`, `.bin`, `.pkl`), files named `.safetensors` that are really pickles, and safetensors headers that do not read |
 
