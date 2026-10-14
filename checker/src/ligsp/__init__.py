@@ -5,5 +5,5 @@ to this computer's own addresses, and opens model files only to read
 safetensors headers. See checker/DESIGN.md.
 """
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 PROFILE_VERSION = "0.1"

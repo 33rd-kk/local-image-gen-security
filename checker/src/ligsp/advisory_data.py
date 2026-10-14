@@ -4,7 +4,7 @@ Written by tools/update_advisories.py from GitHub's advisory API; do not edit
 by hand. The checker reads this table and fetches nothing.
 """
 
-DATA_AS_OF = "2026-10-14"
+DATA_AS_OF = "2026-10-15"
 
 ADVISORIES = [{'id': 'GHSA-53g8-45wq-pcv8',
   'tool': 'comfyui',
