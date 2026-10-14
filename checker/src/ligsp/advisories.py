@@ -69,6 +69,8 @@ def advisory_checks(tool_versions: dict[str, str | None]) -> list[Result]:
     for tool, raw in tool_versions.items():
         name = fixes.TOOL_NAMES.get(tool, tool)
         known = [row for row in ADVISORIES if row["tool"] == tool]
+        if not known:
+            continue  # a tool that publishes no advisories: nothing to match, and no pass to claim
         version = parse_version(raw)
         if version is None:
             if known:

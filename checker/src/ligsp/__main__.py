@@ -12,6 +12,7 @@ from .advisories import advisory_checks
 from .ext import extension_checks
 from .files import file_checks
 from .follow import backend_urls
+from .kinds import kind_checks
 from .models import model_checks
 from .net import network_checks, own_lan_addresses
 from .report import Redactor, as_json, as_text, summary
@@ -38,6 +39,7 @@ def check_server(transport: Transport, url: str, lan: list[str], follow: list[st
     target = Target(url, found.kind, found.version, via=via)
     results, reachable = network_checks(transport, url, found, lan)
     target.results.extend(results)
+    target.results.extend(kind_checks(found, reachable))
     if found.answer is not None:
         web = web_checks(transport, url, found, reachable)
         target.results.extend(web)

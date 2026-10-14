@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **More servers recognised**: InvokeAI, SwarmUI, Latentry's engine, and
+  other servers on Latentry's backend API, each with fixes in its own
+  settings.
+  - InvokeAI: login is judged by its multi-user mode. AUTH-1 flags
+    accounts that are on but have no administrator yet.
+  - SwarmUI: also recognised when its page sends you to its login page.
+  - Latentry's engine: BE-2 checks that it needs its token.
+  - For other backend-API servers, whose `/api/health` is open by design,
+    whether generating needs a login is reported as unknown rather than
+    guessed.
 - **`--follow`**: for a hub (Latentry), the checker also checks every
   backend it is set up to use, so one command covers the whole setup. It
   reads only the backends' URLs from the hub, on the computer the hub runs

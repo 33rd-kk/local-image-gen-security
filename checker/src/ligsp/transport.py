@@ -31,6 +31,11 @@ SAFE_PATHS = (
     "/sdapi/v1/extensions",  # A1111 / Forge
     "/api/pair",  # Latentry: whether this device is paired
     "/api/settings",  # Latentry: its settings view (GET only reads; saving is a PUT), for --follow
+    "/api/health",  # Latentry's backend API and its engine: status only
+    "/api/models",  # Latentry's engine only (asked once /api/health says so): its model list, read-only
+    "/api/v1/app/version",  # InvokeAI: its version
+    "/api/v1/auth/status",  # InvokeAI: whether multi-user mode is on and set up
+    "/Text2Image",  # SwarmUI: its main page (GET / only redirects there)
 )
 MAX_BODY = 256 * 1024
 USER_AGENT = "ligsp (read-only security check)"
