@@ -5,25 +5,22 @@ recursively) for the private files of the hubs the checker knows (Latentry's
 settings file, pairing key, paired-device list and folder-name key). Only
 the files' permissions are read, never their content.
 
-On POSIX that is the mode. On Windows it is the access list, read with
-icacls from Windows' own folder (no shell). Entries for the owner, SYSTEM
-and Administrators are fine; any other account or group (Users, Everyone,
-Authenticated Users, another person) fails.
+On POSIX that is the mode. On Windows it is the access list, compared by
+SID (see winacl.py), so it works in any system language. Entries for the
+owner, SYSTEM and Administrators are fine; any other account or group
+(Users, Everyone, Authenticated Users, another person) fails.
 """
 
 from __future__ import annotations
 
-import os
 import stat
-import subprocess
 import sys
 from pathlib import Path
 
-from . import fixes
+from . import fixes, winacl
 from .results import FAIL, PASS, UNKNOWN, Result
 
 KNOWN_PRIVATE = ("latentry.settings.json", "latentry.pairing-key", "latentry.pairing-devices.json", "latentry.folder-names-key")
-WINDOWS_FINE = ("NT AUTHORITY\\SYSTEM", "BUILTIN\\Administrators")
 
 
 def private_files(path: Path) -> list[Path]:
@@ -32,40 +29,15 @@ def private_files(path: Path) -> list[Path]:
     return [path] if path.is_file() else []
 
 
-def _icacls(file: Path) -> list[str] | None:
-    """The account names in a file's access list, or None when it cannot be read."""
-    tool = Path(os.environ.get("SystemRoot", "C:\\Windows")) / "System32" / "icacls.exe"
-    try:
-        raw = subprocess.run([str(tool), str(file)], capture_output=True, timeout=10, check=True).stdout
-    except (OSError, subprocess.SubprocessError):
-        return None
-    # icacls writes in the console's OEM code page, whatever Python's own encoding is.
-    out = raw.decode("oem", "replace")
-    names = []
-    for line in out.splitlines():
-        line = line.replace(str(file), "", 1).strip()
-        if ":(" in line:
-            names.append(line.split(":(", 1)[0].strip())
-    return names
-
-
-def _current_user_names() -> set[str]:
-    user = os.environ.get("USERNAME", "")
-    names = {user.lower()}
-    for domain in (os.environ.get("USERDOMAIN", ""), os.environ.get("COMPUTERNAME", "")):
-        if domain:
-            names.add(f"{domain}\\{user}".lower())
-    return names
-
-
 def others_who_can_read(file: Path, platform: str = sys.platform) -> list[str] | None:
     """Who besides the owner (and Windows itself) can read `file`; None when unknown."""
     if platform == "win32":
-        names = _icacls(file)
-        if names is None:
+        found = winacl.readers(str(file))
+        me = winacl.current_user_sid()
+        if found is None or me is None:
             return None
-        mine = _current_user_names()
-        return [n for n in names if n.lower() not in mine and n not in WINDOWS_FINE]
+        fine = {me, winacl.SYSTEM, winacl.ADMINISTRATORS}
+        return sorted({name for sid, name in found if sid not in fine})
     mode = file.stat().st_mode
     others = []
     if mode & stat.S_IRGRP:

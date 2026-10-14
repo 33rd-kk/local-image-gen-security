@@ -300,19 +300,24 @@ def test_windows_access_lists(tmp_path: Path) -> None:
     import os
     import subprocess
 
+    from ligsp import winacl
     from ligsp.files import file_checks
 
     icacls = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "icacls.exe")
+    me = winacl.current_user_sid()
+    assert me and me.startswith("S-1-5-")
     secret = tmp_path / "latentry.pairing-key"
     secret.write_text("k")
-    user = os.environ["USERNAME"]
-    subprocess.run([icacls, str(secret), "/inheritance:r", "/grant:r", f"{user}:F", "*S-1-5-18:F"], check=True, capture_output=True)
-    assert [r.status for r in file_checks(secret)] == [PASS]
+    # By SID, so the test does not depend on the system's language or the computer's name.
+    subprocess.run([icacls, str(secret), "/inheritance:r", "/grant:r", f"*{me}:F", "*S-1-5-18:F"], check=True, capture_output=True)
+    first = file_checks(secret)
+    assert [r.status for r in first] == [PASS], [(r.status, r.evidence) for r in first]
+    assert {sid for sid, _ in winacl.readers(str(secret))} <= {me, winacl.SYSTEM, winacl.ADMINISTRATORS}
     subprocess.run([icacls, str(secret), "/grant", "*S-1-5-32-545:R"], check=True, capture_output=True)  # BUILTIN\Users
+    assert "S-1-5-32-545" in {sid for sid, _ in winacl.readers(str(secret))}
     result = file_checks(secret)[0]
-    assert result.status == FAIL
+    assert result.status == FAIL, (result.status, result.evidence)
     assert result.evidence[0].startswith("latentry.pairing-key: also readable by ")
-    assert "Users" in result.evidence[0]
 
 
 # ── Round 4: fixed endpoints, disguised pickles, plain HTTP on the network ──

@@ -46,7 +46,8 @@ error. `--json FILE` (or `-`) writes the same report as JSON.
 - In model folders it opens only `.safetensors` files, and only to read
   their header. It follows no links out of the folder.
 - For private files it reads only their permissions: the mode, or on
-  Windows the access list from `icacls` in Windows' own folder.
+  Windows the access list, through the Windows API and compared by account
+  ID (SID), so it works in any system language.
 - It sends no telemetry and checks for no updates, and it writes no file
   unless you ask (`--json FILE`).
 - A pass means these checks found no problem, not that the setup is safe.
