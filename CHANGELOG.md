@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **An OPS-3 pass says what it covers**: it now reads "no advisory in the
+  checker's data matches (as of DATE)" instead of "no published advisory
+  applies", and every OPS-3 result for ComfyUI notes that it covers ComfyUI
+  core only: the frontend package is versioned separately, and its
+  advisories are not checked (ComfyUI reports only the frontend version it
+  requires). What the checker sends and reads is unchanged.
 - **An introduction for readers new to LIGSP**:
   [articles/securing-your-local-setup.md](articles/securing-your-local-setup.md)
   explains the common issues, how to read a report, what the checker will

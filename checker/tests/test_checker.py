@@ -441,6 +441,7 @@ def test_an_old_comfyui_and_manager_fail_ops_3_with_their_advisories() -> None:
     assert comfy.status == FAIL and sum("GHSA-" in item for item in comfy.evidence) == 4
     assert manager.status == FAIL and any("GHSA-562r-8445-54r2" in item for item in manager.evidence)
     assert any(item.startswith("advisories as of ") for item in comfy.evidence)
+    assert any("frontend" in item for item in comfy.evidence) and not any("frontend" in item for item in manager.evidence)
 
 
 def test_current_versions_pass_ops_3_and_say_how_old_the_table_is() -> None:
@@ -450,7 +451,9 @@ def test_current_versions_pass_ops_3_and_say_how_old_the_table_is() -> None:
         target = cli.check_server(Transport(), url, [])
     ops = by_id(target, "OPS-3")
     assert [r.status for r in ops] == [PASS, PASS]
-    assert all(DATA_AS_OF in r.title for r in ops)
+    assert all(DATA_AS_OF in r.title and "checker's data" in r.title for r in ops)
+    comfy = next(r for r in ops if r.title.startswith("ComfyUI 0."))
+    assert comfy.evidence == ["Covers ComfyUI core only: its frontend package is versioned separately, and its advisories are not checked"]
 
 
 def test_the_checker_fetches_no_advisories() -> None:

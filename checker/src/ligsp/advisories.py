@@ -2,7 +2,10 @@
 
 Matched against the table in advisory_data.py, which ships with each release
 of the checker and is never fetched at run time. A result says how old the
-table is, so a pass is read as "none known as of then".
+table is, so a pass is read as "none in this table as of then". A pass covers
+only the component named: ComfyUI's frontend package is versioned and
+advised on separately, and ComfyUI reports only the frontend version it
+requires, not the one installed, so its advisories are not matched.
 
 Version ranges are GitHub's: "< 0.28.0", ">= 1.0, < 2.0" (a comma joins two
 conditions), and some advisories write "< 3.39.2, 4.0.0 - 4.0.4", where the
@@ -19,6 +22,11 @@ from .advisory_data import ADVISORIES, DATA_AS_OF
 from .results import FAIL, PASS, UNKNOWN, WARN, Result
 
 SERIOUS = ("critical", "high")
+
+# What a result for this tool does not cover, said on every OPS-3 result for it.
+NOT_COVERED = {
+    "comfyui": "Covers ComfyUI core only: its frontend package is versioned separately, and its advisories are not checked",
+}
 
 
 def parse_version(text: str | None) -> tuple[int, ...] | None:
@@ -88,10 +96,13 @@ def advisory_checks(tool_versions: dict[str, str | None]) -> list[Result]:
             serious = any(row["severity"] in SERIOUS for row in hits)
             evidence = [f"{row['id']} ({row['severity']}): {row['summary']}. Fixed in {row['fixed'] or 'no release yet'}. {row['url']}" for row in hits]
             evidence.append(f"advisories as of {DATA_AS_OF}")
+            if tool in NOT_COVERED:
+                evidence.append(NOT_COVERED[tool])
             results.append(
                 Result("OPS-3", FAIL if serious else WARN, f"{name} {shown} has {len(hits)} published security advisor{'y' if len(hits) == 1 else 'ies'}",
                        evidence, fixes.WHY["OPS-3"], fixes.fix("OPS-3", tool))
             )
         else:
-            results.append(Result("OPS-3", PASS, f"{name} {shown}: no published advisory applies (as of {DATA_AS_OF})"))
+            note = [NOT_COVERED[tool]] if tool in NOT_COVERED else []
+            results.append(Result("OPS-3", PASS, f"{name} {shown}: no advisory in the checker's data matches (as of {DATA_AS_OF})", note))
     return results
