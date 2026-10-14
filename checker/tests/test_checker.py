@@ -366,6 +366,7 @@ def test_plain_http_on_the_network_is_said() -> None:
     with server("latentry", bind="0.0.0.0", pairing=True, check_host=True) as (url, _):
         target = cli.check_server(Transport(), url, [OTHER_ADDRESS])
     assert any("unencrypted" in item for item in by_id(target, "NET-1")[0].evidence)
+    assert not any("unencrypted" in item for item in by_id(target, "NET-2")[0].evidence)  # said once, under NET-1
 
 
 # ── The repository itself ────────────────────────────────────────────────
