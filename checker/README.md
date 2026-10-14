@@ -49,7 +49,7 @@ error. `--json FILE` (or `-`) writes the same report as JSON.
   to the same port on this computer's own addresses. One function sends
   every request, and it refuses anything else (`transport.py`). A safe
   method alone is not enough: some servers act on a GET (ComfyUI-Manager
-  removes or restores snapshots on one). It never queues a job, uploads a
+  releases from 2024 removed and restored snapshots on one). It never queues a job, uploads a
   file or changes a setting.
 - It reads only the fields it needs. ComfyUI's `/system_stats` also lists
   the server's command line; that is dropped unread.
