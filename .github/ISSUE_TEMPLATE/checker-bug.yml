@@ -1,0 +1,42 @@
+name: Checker problem
+description: The checker gives a wrong result, crashes, or misses something it should find
+labels: [checker]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not post your own addresses, ports, folder names, user name or pictures here.
+        `ligsp check --redact` makes a report you can paste as it is.
+        A security problem in the checker goes through private reporting instead: see SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Checker version
+      description: The output of `ligsp --version`
+      placeholder: ligsp 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System and Python
+      placeholder: Windows 11, Python 3.12
+    validations:
+      required: true
+  - type: input
+    id: server
+    attributes:
+      label: What you checked
+      description: The tool and its version, e.g. ComfyUI 0.39 or Forge Neo 2.30, or a model folder
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Redacted report
+      description: The output of `ligsp check ... --redact` (or `--redact --json -`)
+      render: text

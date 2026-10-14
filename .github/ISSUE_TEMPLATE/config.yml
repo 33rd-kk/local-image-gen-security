@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem in the checker
+    url: https://github.com/33rd-kk/local-image-gen-security/security/advisories/new
+    about: Privately, so it can be fixed before it is public.
+  - name: A problem in ComfyUI, AUTOMATIC1111 / Forge or another tool
+    url: https://github.com/33rd-kk/local-image-gen-security/blob/main/SECURITY.md
+    about: Report it to that tool's own project; SECURITY.md says why.
