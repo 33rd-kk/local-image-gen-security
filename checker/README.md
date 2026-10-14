@@ -9,6 +9,7 @@ ligsp check http://127.0.0.1:8188                      # a ComfyUI
 ligsp check http://127.0.0.1:7860 --models D:\models   # A1111 / Forge and a model folder
 ligsp check http://127.0.0.1:3000 --redact             # a report you can share
 ligsp check --private C:\latentry                       # who can read Latentry's settings and keys
+ligsp check http://127.0.0.1:3000 --follow              # Latentry, and every backend it is set up to use
 ```
 
 Common default ports: ComfyUI 8188, Comfy Desktop 8000, A1111 / Forge 7860,
@@ -44,6 +45,10 @@ error. `--json FILE` (or `-`) writes the same report as JSON.
   file or changes a setting.
 - It reads only the fields it needs. ComfyUI's `/system_stats` also lists
   the server's command line; that is dropped unread.
+- With `--follow` it reads a hub's backend list (Latentry's `/api/settings`,
+  which answers only on the computer the hub runs on) and keeps only each
+  backend's URL. Folders, model names and the rest are dropped unread, and
+  the backends' own backends are not followed.
 - In model folders it opens only `.safetensors` files, and only to read
   their header. It follows no links out of the folder.
 - For private files it reads only their permissions: the mode, or on

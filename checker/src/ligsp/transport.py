@@ -30,6 +30,7 @@ SAFE_PATHS = (
     "/sdapi/v1/samplers",  # A1111 / Forge
     "/sdapi/v1/extensions",  # A1111 / Forge
     "/api/pair",  # Latentry: whether this device is paired
+    "/api/settings",  # Latentry: its settings view (GET only reads; saving is a PUT), for --follow
 )
 MAX_BODY = 256 * 1024
 USER_AGENT = "ligsp (read-only security check)"

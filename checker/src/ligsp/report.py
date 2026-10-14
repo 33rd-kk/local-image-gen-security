@@ -50,7 +50,8 @@ def as_text(targets: list[Target], redact: Redactor) -> str:
     for target in targets:
         name = {"models": "Models in", "files": "Private files in"}.get(target.kind) or KIND_NAMES.get(target.kind, target.kind)
         version = f" {target.version}" if target.version else ""
-        lines.append(redact(f"{name}{version} {'' if target.kind in ('models', 'files') else 'at '}{target.label}".replace("  ", " ")))
+        via = f" (a backend of {target.via})" if target.via else ""
+        lines.append(redact(f"{name}{version} {'' if target.kind in ('models', 'files') else 'at '}{target.label}{via}".replace("  ", " ")))
         for result in sorted(target.results, key=lambda r: [FAIL, WARN, UNKNOWN, PASS].index(r.status)):
             lines.append(redact(f"  {MARK[result.status]}  {result.id:<6} {result.title}"))
             for item in result.evidence:

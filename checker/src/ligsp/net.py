@@ -113,10 +113,11 @@ def network_checks(transport: Transport, base: str, found: Identified, lan: list
         if is_loopback(host):
             status = FAIL if open_ones else WARN
             title = "Reachable from your network" + ("" if open_ones else ", but it asks for a login or pairing")
+            net1_evidence = list(evidence)
             if urlsplit(base).scheme == "http":
                 # The profile leaves TLS on the local network open (section 8); say what it means.
-                evidence = [*evidence, "over plain HTTP: prompts, pictures and any login or pairing cookie cross the network unencrypted"]
-            results.append(Result("NET-1", status, title, evidence, fixes.WHY["NET-1"], fixes.fix("NET-1", kind)))
+                net1_evidence.append("over plain HTTP: prompts, pictures and any login or pairing cookie cross the network unencrypted")
+            results.append(Result("NET-1", status, title, net1_evidence, fixes.WHY["NET-1"], fixes.fix("NET-1", kind)))
         if open_ones:
             results.append(Result("NET-2", FAIL, "Usable from the network without logging in", evidence, fixes.WHY["NET-2"], fixes.fix("NET-2", kind)))
         else:

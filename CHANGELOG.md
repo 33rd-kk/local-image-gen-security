@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **`--follow`**: for a hub (Latentry), the checker also checks every
+  backend it is set up to use, so one command covers the whole setup. It
+  reads only the backends' URLs from the hub, on the computer the hub runs
+  on, and does not follow further.
 - **OPS-3, published advisories** (profile, SHOULD): the owner can find out
   whether the version they run has published security advisories, and
   which version fixes them.
