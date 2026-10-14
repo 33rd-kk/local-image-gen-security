@@ -28,6 +28,10 @@ class Target:
     kind: str  # "comfyui", "a1111", "latentry", "http" or "models"
     version: str | None = None
     results: list[Result] = field(default_factory=list)
+    via: str | None = None  # the hub it was found through (--follow)
 
     def to_json(self) -> dict:
-        return {"target": self.label, "kind": self.kind, "version": self.version, "results": [r.to_json() for r in self.results]}
+        data = {"target": self.label, "kind": self.kind, "version": self.version, "results": [r.to_json() for r in self.results]}
+        if self.via:
+            data["via"] = self.via
+        return data

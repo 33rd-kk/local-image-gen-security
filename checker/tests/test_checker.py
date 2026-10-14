@@ -26,7 +26,7 @@ needs_second_loopback = pytest.mark.skipif(sys.platform == "darwin", reason="mac
 
 
 def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pairing: bool = False, manager: bool = False,
-                 version: str = "0.39.2", manager_version: str = "V4.2.2"):
+                 version: str = "0.39.2", manager_version: str = "V4.2.2", settings: object = None):
     class Handler(BaseHTTPRequestHandler):
         seen: ClassVar[list[tuple[str, str, str]]] = []
 
@@ -56,6 +56,8 @@ def make_handler(kind: str, *, cors: bool = False, check_host: bool = False, pai
                 return self._send(200, ["/extensions/core/a.js", "/extensions/core/b.js", "/extensions/private-pack/x.js", "/extensions/other-pack/y.js"])
             if kind == "comfyui" and manager and self.path == "/v2/manager/version":
                 return self._send(200, manager_version)
+            if kind == "latentry" and self.path == "/api/settings" and settings is not None:
+                return self._send(200, settings)
             if kind == "latentry" and self.path == "/api/pair":
                 local = self.client_address[0] == "127.0.0.1" and host == "127.0.0.1"
                 return self._send(200, {"local": True} if local or not pairing else {"paired": False})
@@ -423,3 +425,53 @@ def test_current_versions_pass_ops_3_and_say_how_old_the_table_is() -> None:
 def test_the_checker_fetches_no_advisories() -> None:
     source = (Path(__file__).resolve().parents[1] / "src" / "ligsp" / "advisories.py").read_text(encoding="utf-8")
     assert "urllib" not in source and "http" not in source.replace("https://", "")
+
+
+# ── --follow ─────────────────────────────────────────────────────────────
+
+
+def test_follow_checks_a_hubs_backends_and_keeps_only_their_urls() -> None:
+    with server("comfyui") as (comfy_url, comfy_handler):
+        settings = {
+            "editable": True,
+            "backends": [
+                {"id": "comfy", "kind": "comfyui", "url": comfy_url, "workflowsDir": "C:/Users/someone/secret-workflows", "token": "settings"},
+                {"id": "odd", "url": "file:///etc/passwd"},
+            ],
+            "gallery": {"dirs": ["C:/Users/someone/private-pictures"]},
+        }
+        with server("latentry", settings=settings) as (hub_url, _):
+            transport = Transport()
+            found: list[str] = []
+            hub = cli.check_server(transport, hub_url, [], found)
+            assert found == [comfy_url]  # the file: URL is dropped
+            backend = cli.check_server(transport, found[0], [], None, hub_url)
+    assert hub.kind == "latentry" and backend.kind == "comfyui" and backend.via == hub_url
+    text = json.dumps([hub.to_json(), backend.to_json()])
+    assert "secret-workflows" not in text and "private-pictures" not in text
+    assert {method for method, _ in transport.sent} <= {"GET", "HEAD", "OPTIONS"}
+    assert any(path == "/system_stats" for _, path, _ in comfy_handler.seen)
+
+
+def test_follow_from_the_command_line_checks_the_backend_once(capsys) -> None:
+    with server("comfyui") as (comfy_url, _):
+        settings = {"backends": [{"url": comfy_url}, {"url": comfy_url + "/"}]}
+        with server("latentry", settings=settings) as (hub_url, _):
+            cli.main(["check", hub_url, comfy_url, "--follow", "--json", "-"])
+    data = json.loads(capsys.readouterr().out)
+    assert [t["kind"] for t in data["targets"]] == ["latentry", "comfyui"]  # named and followed: checked once
+
+
+def test_a_hub_that_will_not_show_its_backends_is_unknown() -> None:
+    with server("latentry", settings={"editable": False, "reason": "Only from this computer"}) as (hub_url, _):
+        found: list[str] = []
+        hub = cli.check_server(Transport(), hub_url, [], found)
+    assert found == []
+    assert [r.status for r in by_id(hub, "FOLLOW")] == ["unknown"]
+    assert "Only from this computer" in by_id(hub, "FOLLOW")[0].title
+
+
+def test_without_follow_the_settings_are_never_asked() -> None:
+    with server("latentry", settings={"backends": []}) as (hub_url, handler):
+        cli.check_server(Transport(), hub_url, [])
+    assert not any(path == "/api/settings" for _, path, _ in handler.seen)

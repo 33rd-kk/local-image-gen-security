@@ -27,6 +27,7 @@ welcome (see Contributing).
 
 ```
 uvx local-image-gen-security check http://127.0.0.1:8188
+uvx local-image-gen-security check http://127.0.0.1:3000 --follow   # a hub and its backends
 pipx run local-image-gen-security check http://127.0.0.1:7860 --models D:\models
 ```
 
