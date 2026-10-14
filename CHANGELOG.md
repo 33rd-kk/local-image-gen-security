@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **A correction**: the checker's README and notes said ComfyUI-Manager
+  removes and restores snapshots on a GET. Its releases from 2024 did; its
+  current ones use POST. The checker's rule (only fixed endpoints known to
+  change nothing) is unchanged.
+
 ## 0.2.0 (2026-10-14)
 
 **The profile (still 0.1: OPS-3 is a SHOULD, so no conformance claim changes)**

@@ -7,8 +7,9 @@ of this computer's own addresses. It follows no redirects and reads at most
 MAX_BODY bytes of an answer.
 
 A safe method is not enough on its own: some servers act on a GET
-(ComfyUI-Manager removes or restores snapshots on one, for example), so
-only endpoints known to change nothing are ever asked.
+(ComfyUI-Manager releases from 2024 removed and restored snapshots on one;
+current ones use POST), so only endpoints known to change nothing are ever
+asked.
 """
 
 from __future__ import annotations

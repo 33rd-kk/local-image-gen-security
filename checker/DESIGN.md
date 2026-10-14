@@ -148,8 +148,8 @@ Every outgoing request goes through one function. That function refuses:
   own addresses.
 
 The tests assert all of these. The path list exists because a safe method
-is not enough: ComfyUI-Manager, for one, removes and restores snapshots on
-GET requests. ComfyUI-Manager's `security_level` cannot be read safely, so
+is not enough: ComfyUI-Manager releases from 2024, for one, removed and
+restored snapshots on GET requests (current releases use POST for that). ComfyUI-Manager's `security_level` cannot be read safely, so
 EXT-1 says that the Manager is present, and how reachable the server is.
 
 ### Language (for the record)
